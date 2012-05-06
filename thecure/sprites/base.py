@@ -142,7 +142,6 @@ class BaseSprite(pygame.sprite.DirtySprite):
         pass
 
     def handle_collision(self, obj, rect, dx, dy):
-        print '%s collided with %s' % (self, obj)
         pass
 
     def handle_stop_colliding(self, obj):
