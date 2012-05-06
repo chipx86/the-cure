@@ -12,6 +12,7 @@ if not os.path.exists(DATA_DIR):
     DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '..', '..', 'data'))
 
 image_cache = {}
+frame_cache = {}
 
 
 def get_cached_image(name, create_func):
@@ -39,6 +40,21 @@ def load_image(name):
             sys.exit(1)
 
     return get_cached_image(name, _load_image_file)
+
+
+def load_spritesheet_frame(name, pos, size):
+    spritesheet = load_image('sprites/' + name)
+
+    rect = pygame.Rect(pos, size)
+    key = repr(rect)
+
+    if key not in frame_cache:
+        frame = pygame.Surface(size).convert_alpha()
+        frame.fill((0, 0, 0, 0))
+        frame.blit(spritesheet, (0, 0), rect)
+        frame_cache[key] = frame
+
+    return frame_cache[key]
 
 
 def get_font_filename():

@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-from thecure.resources import load_image
+from thecure.resources import load_spritesheet_frame
 from thecure.signals import Signal
 
 
@@ -33,13 +33,11 @@ class Sprite(pygame.sprite.DirtySprite):
         self.quad_trees = set()
         self.layer = None
         self.name = name
+        self.image = None
         self.visible = 1
         self.dirty = 2
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
-
-        self.image = None
-        self.image_pos = None
 
     def show(self):
         if not self.visible:
@@ -61,11 +59,12 @@ class Sprite(pygame.sprite.DirtySprite):
         self.image = self.generate_image()
         assert self.image
 
-        self.image_pos = self.SPRITESHEET_FRAMES[self.direction][0]
         self.rect.size = self.SPRITE_SIZE
 
     def generate_image(self):
-        return load_image('sprites/' + self.name)
+        return load_spritesheet_frame(
+            self.name,
+            self.SPRITESHEET_FRAMES[self.direction][0], self.SPRITE_SIZE)
 
     def move_to(self, x, y):
         self.move_by(x - self.rect.x, y - self.rect.y)
