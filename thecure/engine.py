@@ -82,8 +82,13 @@ class TheCureEngine(object):
 
     def switch_level(self, num):
         assert num < len(self.levels)
+
+        if self.active_level:
+            self.active_level.main_layer.remove(player)
+
         self.active_level = self.levels[num]
         self.active_level.reset()
+        self.active_level.main_layer.add(self.player)
         self.player.reset()
 
         self.surface = pygame.Surface(self.active_level.size)

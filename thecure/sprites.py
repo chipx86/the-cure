@@ -30,6 +30,7 @@ class Sprite(pygame.sprite.DirtySprite):
 
         # State
         self.rect = pygame.Rect(0, 0, 0, 0)
+        self.quad_trees = set()
         self.layer = None
         self.name = name
         self.visible = 1
@@ -72,6 +73,15 @@ class Sprite(pygame.sprite.DirtySprite):
     def move_by(self, dx, dy):
         self.rect.move_ip(dx, dy)
         self.moved.emit(dx, dy)
+
+    def on_added(self, layer):
+        pass
+
+    def on_removed(self, layer):
+        pass
+
+    def tick(self):
+        pass
 
 
 class Player(Sprite):
