@@ -3,22 +3,15 @@ from pygame.locals import *
 
 from thecure.resources import load_image
 from thecure.signals import Signal
-from thecure.sprites.base import Direction, Sprite
+from thecure.sprites.base import Direction, Sprite, WalkingSprite
 from thecure.timer import Timer
 
 
 class Bullet(Sprite):
+    NAME = 'bullet'
     MOVE_SPEED = 10
-    SPRITESHEET_ROWS = 1
-    SPRITESHEET_COLS = 1
     OFFSET_X = 6
     OFFSET_Y = 12
-
-    def __init__(self):
-        super(Bullet, self).__init__('bullet')
-
-    def generate_image(self):
-        return load_image('sprites/bullet')
 
     def move_beside(self, sprite, direction):
         if direction == Direction.UP:
@@ -37,25 +30,29 @@ class Bullet(Sprite):
                          (sprite.rect.height - self.rect.height) / 2)
 
 
-class Player(Sprite):
+class Player(WalkingSprite):
     MAX_LIVES = 3
     MAX_HEALTH = 3
 
     SHOOT_MS = 500
 
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: dict(Sprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
-            'shooting': [(2, 0)],
-        }),
-        Direction.LEFT: dict(Sprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
-            'shooting': [(0, 1)],
-        }),
-        Direction.RIGHT: dict(Sprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
-            'shooting': [(0, 2)],
-        }),
-        Direction.UP: dict(Sprite.SPRITESHEET_FRAMES[Direction.UP], **{
-            'shooting': [(2, 3)],
-        }),
+        Direction.DOWN: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
+                'shooting': [(2, 0)],
+            }),
+        Direction.LEFT: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
+                'shooting': [(0, 1)],
+            }),
+        Direction.RIGHT: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
+                'shooting': [(0, 2)],
+            }),
+        Direction.UP: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.UP], **{
+                'shooting': [(2, 3)],
+            }),
     }
 
     def __init__(self):

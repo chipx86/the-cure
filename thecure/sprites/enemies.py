@@ -2,10 +2,10 @@ from pygame.locals import *
 
 from thecure import get_engine
 from thecure.signals import Signal
-from thecure.sprites.base import Direction, Sprite
+from thecure.sprites.base import Direction, Sprite, WalkingSprite
 
 
-class Enemy(Sprite):
+class Enemy(WalkingSprite):
     pass
 
 

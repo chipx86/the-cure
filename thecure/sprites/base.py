@@ -163,35 +163,26 @@ class BaseSprite(pygame.sprite.DirtySprite):
 
 class Sprite(BaseSprite):
     NAME = None
-
-    SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
-            'default': [(1, 0)],
-            'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
-            'running': [(0, 0), (2, 0)],
-        },
-        Direction.LEFT: {
-            'default': [(1, 1)],
-            'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
-            'running': [(0, 1), (2, 1)],
-        },
-        Direction.RIGHT: {
-            'default': [(1, 2)],
-            'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
-            'running': [(0, 2), (2, 2)],
-        },
-        Direction.UP: {
-            'default': [(1, 3)],
-            'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
-            'running': [(0, 3), (2, 3)],
-        },
-    }
-    SPRITESHEET_ROWS = 4
-    SPRITESHEET_COLS = 3
-
     MOVE_SPEED = 4
     RUN_SPEED = 8
     ANIM_MS = 150
+
+    SPRITESHEET_ROWS = 1
+    SPRITESHEET_COLS = 1
+    SPRITESHEET_FRAMES = {
+        Direction.DOWN: {
+            'default': [(0, 0)],
+        },
+        Direction.LEFT: {
+            'default': [(0, 0)],
+        },
+        Direction.RIGHT: {
+            'default': [(0, 0)],
+        },
+        Direction.UP: {
+            'default': [(0, 0)],
+        },
+    }
 
     def __init__(self, name=None):
         super(Sprite, self).__init__()
@@ -307,3 +298,31 @@ class Sprite(BaseSprite):
 
         self.dirty = 2
         self.update_image()
+
+
+class WalkingSprite(Sprite):
+    SPRITESHEET_FRAMES = {
+        Direction.DOWN: {
+            'default': [(1, 0)],
+            'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
+            'running': [(0, 0), (2, 0)],
+        },
+        Direction.LEFT: {
+            'default': [(1, 1)],
+            'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
+            'running': [(0, 1), (2, 1)],
+        },
+        Direction.RIGHT: {
+            'default': [(1, 2)],
+            'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
+            'running': [(0, 2), (2, 2)],
+        },
+        Direction.UP: {
+            'default': [(1, 3)],
+            'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
+            'running': [(0, 3), (2, 3)],
+        },
+    }
+    SPRITESHEET_ROWS = 4
+    SPRITESHEET_COLS = 3
+
