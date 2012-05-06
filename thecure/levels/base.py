@@ -63,22 +63,19 @@ class QuadTree(object):
 
         assert sprite not in self.sprites
         self.sprites.append(sprite)
-
-        if sprite.can_collide:
-            sprite.quad_trees.add(self)
+        sprite.quad_trees.add(self)
 
     def remove(self, sprite):
         if self.parent:
             self.parent.remove(sprite)
             return
 
-        if sprite.can_collide:
-            assert sprite.quad_trees
+        assert sprite.quad_trees
 
-            for tree in sprite.quad_trees:
-                tree.sprites.remove(sprite)
+        for tree in sprite.quad_trees:
+            tree.sprites.remove(sprite)
 
-            sprite.quad_trees.clear()
+        sprite.quad_trees.clear()
 
         if sprite.can_move:
             cnx = self.moved_cnxs.pop(sprite)
@@ -125,35 +122,40 @@ class QuadTree(object):
                     yield leaf
 
     def _recompute_sprite(self, sprite):
-        if sprite.can_collide:
-            assert sprite.quad_trees
+        assert sprite.quad_trees
 
-            if sprite.quad_trees != set(self._get_leaf_trees(sprite.rect)):
-                self.remove(sprite)
-                self.add(sprite)
+        if sprite.quad_trees != set(self._get_leaf_trees(sprite.rect)):
+            self.remove(sprite)
+            self.add(sprite)
 
 
 class Layer(object):
-    def __init__(self, name, index, level):
+    def __init__(self, name, index, parent):
         self.name = name
-        self.level = level
+        self.parent = parent
         self.index = index
-        self.quad_tree = QuadTree(pygame.Rect(0, 0, *self.level.size))
+        self.quad_tree = QuadTree(pygame.Rect(0, 0, *self.parent.size))
 
     def __repr__(self):
-        return 'Layer %s on level %s' % (self.index, self.level)
+        return 'Layer %s on parent %s' % (self.index, self.parent)
 
     def add(self, *objs):
         for obj in objs:
             obj.layer = self
             self.update_sprite(obj)
-            self.quad_tree.add(obj)
+
+            if obj.use_quadtrees:
+                self.quad_tree.add(obj)
+
             obj.on_added(self)
 
     def remove(self, *objs):
         for obj in objs:
             self.update_sprite(obj, True)
-            self.quad_tree.remove(obj)
+
+            if obj.use_quadtrees:
+                self.quad_tree.remove(obj)
+
             obj.on_removed(self)
 
     def update_sprite(self, sprite, force_remove=False):
@@ -162,9 +164,9 @@ class Layer(object):
         sprite.update_image()
 
         if sprite.visible and not force_remove:
-            self.level.group.add(sprite, layer=self.index)
+            self.parent.group.add(sprite, layer=self.index)
         else:
-            self.level.group.remove(sprite)
+            self.parent.group.remove(sprite)
 
     def __iter__(self):
         return iter(self.quad_tree)

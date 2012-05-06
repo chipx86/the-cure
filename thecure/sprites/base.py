@@ -22,7 +22,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         self.dirty = 2
 
         self.can_move = False
-        self.can_collide = False
+        self.use_quadtrees = False
 
     def start(self):
         pass
@@ -83,7 +83,7 @@ class Sprite(BaseSprite):
         self.velocity = (0, 0)
 
         self.can_move = True
-        self.can_collide = True
+        self.use_quadtrees = True
 
         self.frame_state = 'default'
         self.anim_frame = 0
