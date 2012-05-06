@@ -138,15 +138,24 @@ class Player(Sprite):
     def handle_event(self, event):
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
-                self.move_direction(x=1)
+                self.move_direction(Direction.RIGHT)
             elif event.key == K_LEFT:
-                self.move_direction(x=-1)
+                self.move_direction(Direction.LEFT)
             elif event.key == K_UP:
-                self.move_direction(y=-1)
+                self.move_direction(Direction.UP)
             elif event.key == K_DOWN:
-                self.move_direction(y=1)
+                self.move_direction(Direction.DOWN)
 
-    def move_direction(self, x=None, y=None):
+    def move_direction(self, direction):
+        self.direction = direction
+
+        x, y = {
+            Direction.LEFT: (-1, None),
+            Direction.RIGHT: (1, None),
+            Direction.UP: (None, -1),
+            Direction.DOWN: (None, 1),
+        }[direction]
+
         if x:
             x = self.MOVE_SPEED * x
         else:
