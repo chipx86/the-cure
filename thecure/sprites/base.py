@@ -14,6 +14,7 @@ class Direction(object):
 
 class BaseSprite(pygame.sprite.DirtySprite):
     SHOULD_CHECK_COLLISIONS = True
+    DEFAULT_HEALTH = 0
 
     def __init__(self):
         super(BaseSprite, self).__init__()
@@ -22,6 +23,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         self.image = None
         self.visible = 1
         self.dirty = 2
+        self.health = self.DEFAULT_HEALTH
 
         self.collision_rects = []
         self.collision_masks = []
@@ -32,6 +34,9 @@ class BaseSprite(pygame.sprite.DirtySprite):
         self.use_quadtrees = False
 
     def start(self):
+        pass
+
+    def damage(self, damage_value):
         pass
 
     def move_to(self, x, y, check_collisions=False):
@@ -166,6 +171,8 @@ class Sprite(BaseSprite):
     MOVE_SPEED = 4
     RUN_SPEED = 8
     ANIM_MS = 150
+    DEATH_BLINK_MS = 250
+    MAX_BLINKS = 4
 
     SPRITESHEET_ROWS = 1
     SPRITESHEET_COLS = 1
@@ -211,6 +218,12 @@ class Sprite(BaseSprite):
         self.anim_timer = Timer(ms=self.ANIM_MS,
                                 cb=self._on_anim_tick,
                                 start_automatically=False)
+        self.started = True
+
+    def stop(self):
+        self.velocity = (0, 0)
+        self.anim_timer.stop()
+        self.started = False
 
     def show(self):
         if not self.visible:
@@ -224,9 +237,39 @@ class Sprite(BaseSprite):
             self.dirty = 1
             self.layer.update_sprite(self)
 
+    def damage(self, damage_value):
+        if self.health > 0:
+            self.health -= damage_value
+
+            if self.health <= 0:
+                self.die()
+
+    def die(self):
+        self.stop()
+        self.blink_count = 0
+        self.visible = 0
+        self.death_timer = Timer(ms=self.DEATH_BLINK_MS,
+                                 cb=self._on_blinked)
+
+    def _on_blinked(self):
+        self.blink_count += 1
+
+        if self.visible:
+            self.visible = 0
+        else:
+            self.visible = 1
+
+        if self.blink_count == self.MAX_BLINKS:
+            self.visible = 1
+            self.death_timer.stop()
+            self.remove()
+
     def remove(self):
+        self.stop()
+        self.collidable = False
         self.hide()
         self.layer.remove(self)
+        self.layer = None
 
     def update_image(self):
         self.image = self.generate_image()

@@ -12,6 +12,11 @@ class Bullet(Sprite):
     MOVE_SPEED = 10
     OFFSET_X = 6
     OFFSET_Y = 12
+    DAMAGE_VALUE = 5
+
+    def __init__(self, owner_sprite):
+        super(Bullet, self).__init__()
+        self.owner_sprite = owner_sprite
 
     def move_beside(self, sprite, direction):
         if direction == Direction.UP:
@@ -28,6 +33,16 @@ class Bullet(Sprite):
             self.move_to(sprite.rect.right - 2 * self.rect.width,
                          sprite.rect.y + self.OFFSET_Y +
                          (sprite.rect.height - self.rect.height) / 2)
+
+    def should_adjust_position_with(self, obj, dx, dy):
+        return False
+
+    def on_collision(self, dx, dy, obj, self_rect, obj_rect):
+        if obj != self.owner_sprite:
+            self.remove()
+
+            if obj.health > 0:
+                obj.damage(self.DAMAGE_VALUE)
 
 
 class Player(WalkingSprite):
@@ -135,12 +150,16 @@ class Player(WalkingSprite):
         self._update_animation()
 
     def shoot(self):
-        bullet = Bullet()
+        bullet = Bullet(self)
         self.layer.add(bullet)
 
         bullet.move_beside(self, self.direction)
         bullet.set_direction(self.direction)
         bullet.update_velocity()
+        bullet.start()
+
+    def should_adjust_position_with(self, obj, dx, dy):
+        return not isinstance(obj, Bullet) or obj.owner_sprite != self
 
     def set_running(self, running):
         self.running = running
