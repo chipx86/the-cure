@@ -12,7 +12,41 @@ class Direction(object):
     DOWN = 3
 
 
-class Sprite(pygame.sprite.DirtySprite):
+class BaseSprite(pygame.sprite.DirtySprite):
+    def __init__(self):
+        super(BaseSprite, self).__init__()
+
+        self.rect = pygame.Rect(0, 0, 0, 0)
+        self.image = None
+        self.visible = 1
+        self.dirty = 2
+
+        self.can_move = False
+        self.can_collide = False
+
+    def start(self):
+        pass
+
+    def move_to(self, x, y):
+        self.move_by(x - self.rect.x, y - self.rect.y)
+
+    def move_by(self, dx, dy):
+        self.rect.move_ip(dx, dy)
+
+    def update_image(self):
+        raise NotImplementedError
+
+    def on_added(self, layer):
+        pass
+
+    def on_removed(self, layer):
+        pass
+
+    def tick(self):
+        pass
+
+
+class Sprite(BaseSprite):
     SPRITESHEET_FRAMES = {
         Direction.DOWN: {
             'default': [(32, 0)],
@@ -42,13 +76,9 @@ class Sprite(pygame.sprite.DirtySprite):
         self.moved = Signal()
 
         # State
-        self.rect = pygame.Rect(0, 0, 0, 0)
         self.quad_trees = set()
         self.layer = None
         self.name = name
-        self.image = None
-        self.visible = 1
-        self.dirty = 2
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
 
@@ -91,18 +121,9 @@ class Sprite(pygame.sprite.DirtySprite):
             self.name,
             self._get_spritesheet_frames()[self.anim_frame], self.SPRITE_SIZE)
 
-    def move_to(self, x, y):
-        self.move_by(x - self.rect.x, y - self.rect.y)
-
     def move_by(self, dx, dy):
-        self.rect.move_ip(dx, dy)
+        super(Sprite, self).move_by(dx, dy)
         self.moved.emit(dx, dy)
-
-    def on_added(self, layer):
-        pass
-
-    def on_removed(self, layer):
-        pass
 
     def tick(self):
         if self.velocity != (0, 0):
