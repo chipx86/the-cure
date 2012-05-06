@@ -61,6 +61,8 @@ class TheCureEngine(object):
         self.clock = pygame.time.Clock()
         self.player = Player()
         self.levels = []
+        self.level_draw_pos = (0, 0)
+        self.level_draw_area = None
 
         # Debug flags
         self.debug_rects = False
@@ -73,6 +75,10 @@ class TheCureEngine(object):
     def quit(self):
         pygame.quit()
         sys.exit(0)
+
+    def set_level_draw_area(self, x, y, w, h):
+        self.level_draw_pos = (x, y)
+        self.level_draw_area = pygame.Rect(0, 0, w, h)
 
     def _setup_game(self):
         self.camera = Camera(self)
@@ -138,7 +144,9 @@ class TheCureEngine(object):
         if self.active_level:
             self.surface.set_clip(self.camera.rect)
             self.active_level.draw(self.surface)
-            self.screen.blit(self.surface.subsurface(self.camera.rect), (0, 0))
+            self.screen.blit(self.surface.subsurface(self.camera.rect),
+                             self.level_draw_pos,
+                             self.level_draw_area)
 
         if self.show_debug_info:
             debug_str = '%0.f FPS    X: %s    Y: %s' % (
