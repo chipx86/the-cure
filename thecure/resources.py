@@ -59,3 +59,7 @@ def load_spritesheet_frame(name, pos, size):
 
 def get_font_filename():
     return os.path.join(DATA_DIR, 'fonts', 'DejaVuSans.ttf')
+
+
+def get_level_filename(name):
+    return os.path.join(DATA_DIR, 'levels', name + '.json')

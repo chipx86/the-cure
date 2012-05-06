@@ -1,7 +1,9 @@
 import pygame
 from pygame.locals import *
 
+from thecure.levels.loader import LevelLoader
 from thecure.signals import Signal
+from thecure.sprites import Tile
 
 
 class QuadTree(object):
@@ -132,7 +134,8 @@ class QuadTree(object):
 
 
 class Layer(object):
-    def __init__(self, index, level):
+    def __init__(self, name, index, level):
+        self.name = name
         self.level = level
         self.index = index
         self.quad_tree = QuadTree(pygame.Rect(0, 0, *self.level.size))
@@ -171,6 +174,7 @@ class Layer(object):
 
 
 class Level(object):
+    name = None
     start_pos = (0, 0)
     size = (1600, 1600)
 
@@ -179,19 +183,32 @@ class Level(object):
         self.layers = []
         self.group = pygame.sprite.LayeredDirty()
 
-        self.bg_layer = self.new_layer()
-        self.main_layer = self.new_layer()
-        self.fg_layer = self.new_layer()
-
-        self.layers = [self.bg_layer, self.main_layer, self.fg_layer]
+        self.load_level()
 
         self.engine.tick.connect(self.on_tick)
 
-    def new_layer(self):
-        layer = Layer(len(self.layers), self)
-        layer.level = self
-        self.layers.append(layer)
-        return layer
+    def load_level(self):
+        """Load the level from a file, given the current level name."""
+        assert self.name
+
+        loader = LevelLoader(self.name)
+
+        for layer_data in loader.iter_layers():
+            layer_name = layer_data['name']
+
+            layer = Layer(layer_name, layer_data['index'], self)
+            self.layers.append(layer)
+
+            if layer_data['is_main']:
+                self.main_layer = layer
+
+            for tile_data in loader.iter_tiles(layer_name):
+                tile = Tile(filename='tiles/' + tile_data['tile_file'],
+                            tile_offset=(tile_data['tile_x'],
+                                         tile_data['tile_y']))
+                layer.add(tile)
+                tile.move_to(tile_data['col'] * Tile.WIDTH,
+                             tile_data['row'] * Tile.HEIGHT)
 
     def reset(self):
         self.setup()
