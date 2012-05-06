@@ -48,11 +48,11 @@ class Level(object):
         self.setup()
 
     def setup(self):
-       pass
+        pass
 
     def start(self):
-       for sprite in self.group:
-           sprite.start()
+        for sprite in self.group:
+            sprite.start()
 
     def draw(self, screen):
         self.draw_bg(screen)
@@ -73,7 +73,7 @@ class Level(object):
         pass
 
     def on_tick(self):
-       self.group.update()
+        self.group.update()
 
-       for sprite in self.group:
-           sprite.tick()
+        for sprite in self.group:
+            sprite.tick()
