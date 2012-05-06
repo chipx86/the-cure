@@ -117,6 +117,9 @@ class TheCureEngine(object):
             self.quit()
             return False
 
+        if event.type == KEYDOWN and event.key == K_ESCAPE:
+            self.quit()
+            return False
         if event.type == KEYDOWN and event.key == K_F2:
             self.show_debug_info = not self.show_debug_info
         elif event.type == KEYDOWN and event.key == K_F3:
