@@ -16,24 +16,24 @@ class Direction(object):
 class Sprite(pygame.sprite.DirtySprite):
     SPRITESHEET_FRAMES = {
         Direction.DOWN: {
-            'standing': [(32, 0)],
+            'default': [(32, 0)],
             'walking': [(0, 0), (32, 0), (64, 0), (32, 0)],
         },
         Direction.LEFT: {
-            'standing': [(32, 48)],
+            'default': [(32, 48)],
             'walking': [(0, 48), (32, 48), (64, 48), (32, 48)],
         },
         Direction.RIGHT: {
-            'standing': [(32, 96)],
+            'default': [(32, 96)],
             'walking': [(0, 96), (32, 96), (64, 96), (32, 96)],
         },
         Direction.UP: {
-            'standing': [(32, 144)],
+            'default': [(32, 144)],
             'walking': [(0, 144), (32, 144), (64, 144), (32, 144)],
         },
     }
     SPRITE_SIZE = (32, 48)
-    MOVE_SPEED = 6
+    MOVE_SPEED = 2
     ANIM_MS = 150
 
     def __init__(self, name):
@@ -53,13 +53,14 @@ class Sprite(pygame.sprite.DirtySprite):
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
 
-        self.frame_state = 'walking'
+        self.frame_state = 'default'
         self.anim_frame = 0
         self.anim_timer = None
 
     def start(self):
         self.anim_timer = Timer(ms=self.ANIM_MS,
-                                cb=self._on_anim_tick)
+                                cb=self._on_anim_tick,
+                                start_automatically=False)
 
     def show(self):
         if not self.visible:
@@ -102,7 +103,8 @@ class Sprite(pygame.sprite.DirtySprite):
         pass
 
     def tick(self):
-        pass
+        if self.velocity != (0, 0):
+            self.move_by(*self.velocity)
 
     def _get_spritesheet_frames(self):
         return self.SPRITESHEET_FRAMES[self.direction][self.frame_state]
@@ -145,6 +147,15 @@ class Player(Sprite):
                 self.move_direction(Direction.UP)
             elif event.key == K_DOWN:
                 self.move_direction(Direction.DOWN)
+        elif event.type == KEYUP:
+            if event.key == K_RIGHT:
+                self.stop_moving_direction(Direction.RIGHT)
+            elif event.key == K_LEFT:
+                self.stop_moving_direction(Direction.LEFT)
+            elif event.key == K_UP:
+                self.stop_moving_direction(Direction.UP)
+            elif event.key == K_DOWN:
+                self.stop_moving_direction(Direction.DOWN)
 
     def move_direction(self, direction):
         self.direction = direction
@@ -157,14 +168,31 @@ class Player(Sprite):
         }[direction]
 
         if x:
-            x = self.MOVE_SPEED * x
+            x *= self.MOVE_SPEED
         else:
             x = self.velocity[0]
 
         if y:
-            y = self.MOVE_SPEED * x
+            y *= self.MOVE_SPEED
         else:
             y = self.velocity[1]
 
         self.velocity = (x, y)
+
+        if not self.anim_timer.started:
+            self.anim_timer.start()
+            self.frame_state = 'walking'
+
         self.update_image()
+
+    def stop_moving_direction(self, direction):
+        if direction in (Direction.LEFT, Direction.RIGHT):
+            self.velocity = (0, self.velocity[1])
+        elif direction in (Direction.UP, Direction.DOWN):
+            self.velocity = (self.velocity[0], 0)
+
+        if self.velocity == (0, 0):
+            self.anim_timer.stop()
+            self.frame_state = 'default'
+            self.anim_frame = 0
+            self.update_image()
