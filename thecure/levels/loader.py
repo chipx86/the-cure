@@ -14,6 +14,16 @@ class LevelLoader(object):
 
         self._load_file(get_level_filename(name))
 
+    def get_width(self):
+        assert self.data
+        assert 'width' in self.data
+        return self.data['width']
+
+    def get_height(self):
+        assert self.data
+        assert 'height' in self.data
+        return self.data['height']
+
     def iter_layers(self):
         assert self.data
         assert 'layers' in self.data

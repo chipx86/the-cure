@@ -24,14 +24,18 @@ def get_cached_image(name, create_func):
     return image_cache[name]
 
 
+def get_image_filename(name):
+    if not name.endswith('.png') and not name.endswith('.jpg'):
+        filename = name + '.png'
+    else:
+        filename = name
+
+    return os.path.join(DATA_DIR, 'images', *filename.split('/'))
+
+
 def load_image(name):
     def _load_image_file():
-        if not name.endswith('.png') and not name.endswith('.jpg'):
-            filename = name + '.png'
-        else:
-            filename = name
-
-        path = os.path.join(DATA_DIR, 'images', *filename.split('/'))
+        path = get_image_filename(name)
 
         try:
             return pygame.image.load(path)
