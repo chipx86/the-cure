@@ -60,8 +60,11 @@ class Level(object):
 
         if self.engine.debug_rects:
             for sprite in self.group:
+                if sprite.layer.name != 'main':
+                    continue
+
                 if sprite.visible:
-                    rects = [sprite.rect]
+                    rects = sprite.collision_rects or [sprite.rect]
 
                     for rect in rects:
                         pygame.draw.rect(screen, (0, 0, 255), rect, 1)

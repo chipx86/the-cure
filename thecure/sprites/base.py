@@ -13,6 +13,8 @@ class Direction(object):
 
 
 class BaseSprite(pygame.sprite.DirtySprite):
+    SHOULD_CHECK_COLLISIONS = True
+
     def __init__(self):
         super(BaseSprite, self).__init__()
 
@@ -21,17 +23,130 @@ class BaseSprite(pygame.sprite.DirtySprite):
         self.visible = 1
         self.dirty = 2
 
+        self.collision_rects = []
+        self.collision_masks = []
+        self._colliding_objects = set()
+
+        self.collidable = True
         self.can_move = False
         self.use_quadtrees = False
 
     def start(self):
         pass
 
-    def move_to(self, x, y):
-        self.move_by(x - self.rect.x, y - self.rect.y)
+    def move_to(self, x, y, check_collisions=False):
+        self.move_by(x - self.rect.x, y - self.rect.y, check_collisions)
 
-    def move_by(self, dx, dy):
+    def move_by(self, dx, dy, check_collisions=True):
+        if check_collisions:
+            if dx:
+                self._move(dx=dx)
+
+            if dy:
+                self._move(dy=dy)
+        else:
+            self.rect.move_ip(dx, dy)
+
+        self.update_collision_rects()
+
+    def _move(self, dx=0, dy=0):
         self.rect.move_ip(dx, dy)
+        self.rect.left = max(self.rect.left, 0)
+        self.rect.right = min(self.rect.right, self.layer.parent.size[0])
+        self.check_collisions(dx, dy)
+
+    def check_collisions(self, dx=0, dy=0):
+        old_colliding_objects = set(self._colliding_objects)
+        self._colliding_objects = set()
+
+        for obj, self_rect, obj_rect in self.get_collisions():
+            if (self_rect == self.rect and
+                self.should_adjust_position_with(obj, dx, dy)):
+                self.position_beside(obj_rect, dx, dy)
+
+            obj.handle_collision(self, obj_rect, dx, dy)
+            self.on_collision(dx, dy, obj, self_rect, obj_rect)
+            self._colliding_objects.add(obj)
+
+        for obj in old_colliding_objects.difference(self._colliding_objects):
+            obj.handle_stop_colliding(self)
+
+    def should_adjust_position_with(self, obj, dx, dy):
+        return True
+
+    def position_beside(self, rect, dx, dy):
+        if dy < 0:
+            self.rect.top = rect.bottom
+        elif dy > 0:
+            self.rect.bottom = rect.top
+        elif dx < 0:
+            self.rect.left = rect.right
+        elif dx > 0:
+            self.rect.right = rect.left
+
+    def get_collisions(self, tree=None, ignore_collidable_flag=False):
+        if not self.SHOULD_CHECK_COLLISIONS and not ignore_collidable_flag:
+            raise StopIteration
+
+        if tree is None:
+            tree = self.layer.quad_tree
+
+        num_checks = 0
+
+        if self.collision_rects:
+            self_rect = self.collision_rects[0].unionall(
+                self.collision_rects[1:])
+        else:
+            self_rect = self.rect
+
+        # We want more detailed collision info, so we use our own logic
+        # instead of calling spritecollide.
+        for obj in tree.get_sprites(self_rect):
+            num_checks += 1
+            self_rect, obj_rect = \
+                self._check_collision(self, obj, ignore_collidable_flag)
+
+            if self_rect and obj_rect:
+                yield obj, self_rect, obj_rect
+
+        #print 'Performing %s checks' % num_checks
+
+    def _check_collision(self, left, right, ignore_collidable_flag):
+        if (left == right or
+            left.layer.index != right.layer.index or
+            (not ignore_collidable_flag and
+             ((not left.collidable or not right.collidable) or
+              (not left.SHOULD_CHECK_COLLISIONS and
+               not right.SHOULD_CHECK_COLLISIONS)))):
+            return None, None
+
+        left_rects = left.collision_rects or [left.rect]
+        right_rects = right.collision_rects or [right.rect]
+
+        for left_index, left_rect in enumerate(left_rects):
+            right_index = left_rect.collidelist(right_rects)
+
+            if right_index == -1:
+                continue
+
+            right_rect = right_rects[right_index]
+
+            return left_rect, right_rect
+
+        return None, None
+
+    def update_collision_rects(self):
+        pass
+
+    def handle_collision(self, obj, rect, dx, dy):
+        print '%s collided with %s' % (self, obj)
+        pass
+
+    def handle_stop_colliding(self, obj):
+        pass
+
+    def on_collision(self, dx, dy, obj, self_rect, obj_rect):
+        pass
 
     def update_image(self):
         raise NotImplementedError
@@ -47,6 +162,8 @@ class BaseSprite(pygame.sprite.DirtySprite):
 
 
 class Sprite(BaseSprite):
+    NAME = None
+
     SPRITESHEET_FRAMES = {
         Direction.DOWN: {
             'default': [(64, 0)],
@@ -74,7 +191,7 @@ class Sprite(BaseSprite):
     RUN_SPEED = 8
     ANIM_MS = 150
 
-    def __init__(self, name):
+    def __init__(self, name=None):
         super(Sprite, self).__init__()
 
         # Signals
@@ -83,7 +200,9 @@ class Sprite(BaseSprite):
         # State
         self.quad_trees = set()
         self.layer = None
-        self.name = name
+        self.name = name or self.NAME
+        assert self.name
+
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
         self.speed = self.MOVE_SPEED
@@ -127,8 +246,8 @@ class Sprite(BaseSprite):
             self.name,
             self._get_spritesheet_frames()[self.anim_frame], self.SPRITE_SIZE)
 
-    def move_by(self, dx, dy):
-        super(Sprite, self).move_by(dx, dy)
+    def move_by(self, dx, dy, check_collisions=True):
+        super(Sprite, self).move_by(dx, dy, check_collisions=check_collisions)
         self.moved.emit(dx, dy)
 
     def set_direction(self, direction):
