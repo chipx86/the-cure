@@ -49,7 +49,7 @@ def load_image(name):
 def load_spritesheet_frame(name, pos, size):
     spritesheet = load_image('sprites/' + name)
 
-    rect = pygame.Rect(pos, size)
+    rect = pygame.Rect(pos[0] * size[0], pos[1] * size[1], *size)
     key = '%s-%r' % (name, rect)
 
     if key not in frame_cache:

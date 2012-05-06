@@ -18,7 +18,6 @@ class Tile(BaseSprite):
     def update_image(self):
         self.image = load_spritesheet_frame(
             self.filename,
-            (self.tile_offset[0] * self.WIDTH,
-             self.tile_offset[1] * self.HEIGHT),
+            self.tile_offset,
             (self.WIDTH, self.HEIGHT))
         assert self.image

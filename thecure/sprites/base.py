@@ -166,24 +166,24 @@ class Sprite(BaseSprite):
 
     SPRITESHEET_FRAMES = {
         Direction.DOWN: {
-            'default': [(64, 0)],
-            'walking': [(0, 0), (64, 0), (128, 0), (64, 0)],
-            'running': [(0, 0), (128, 0)],
+            'default': [(1, 0)],
+            'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
+            'running': [(0, 0), (2, 0)],
         },
         Direction.LEFT: {
-            'default': [(64, 96)],
-            'walking': [(0, 96), (64, 96), (128, 96), (64, 96)],
-            'running': [(0, 96), (128, 96)],
+            'default': [(1, 1)],
+            'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
+            'running': [(0, 1), (2, 1)],
         },
         Direction.RIGHT: {
-            'default': [(64, 192)],
-            'walking': [(0, 192), (64, 192), (128, 192), (64, 192)],
-            'running': [(0, 192), (128, 192)],
+            'default': [(1, 2)],
+            'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
+            'running': [(0, 2), (2, 2)],
         },
         Direction.UP: {
-            'default': [(64, 288)],
-            'walking': [(0, 288), (64, 288), (128, 288), (64, 288)],
-            'running': [(0, 288), (128, 288)],
+            'default': [(1, 3)],
+            'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
+            'running': [(0, 3), (2, 3)],
         },
     }
     SPRITE_SIZE = (64, 96)
@@ -246,6 +246,9 @@ class Sprite(BaseSprite):
             self.name,
             self._get_spritesheet_frames()[self.anim_frame], self.SPRITE_SIZE)
 
+    def _get_spritesheet_frames(self):
+        return self.SPRITESHEET_FRAMES[self.direction][self.frame_state]
+
     def move_by(self, dx, dy, check_collisions=True):
         super(Sprite, self).move_by(dx, dy, check_collisions=check_collisions)
         self.moved.emit(dx, dy)
@@ -289,9 +292,6 @@ class Sprite(BaseSprite):
     def tick(self):
         if self.velocity != (0, 0):
             self.move_by(*self.velocity)
-
-    def _get_spritesheet_frames(self):
-        return self.SPRITESHEET_FRAMES[self.direction][self.frame_state]
 
     def _on_anim_tick(self):
         frames = self._get_spritesheet_frames()

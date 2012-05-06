@@ -44,16 +44,16 @@ class Player(Sprite):
 
     SPRITESHEET_FRAMES = {
         Direction.DOWN: dict(Sprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
-            'shooting': [(128, 0)],
+            'shooting': [(2, 0)],
         }),
         Direction.LEFT: dict(Sprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
-            'shooting': [(0, 96)],
+            'shooting': [(0, 1)],
         }),
         Direction.RIGHT: dict(Sprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
-            'shooting': [(0, 192)],
+            'shooting': [(0, 2)],
         }),
         Direction.UP: dict(Sprite.SPRITESHEET_FRAMES[Direction.UP], **{
-            'shooting': [(128, 288)],
+            'shooting': [(2, 3)],
         }),
     }
 
