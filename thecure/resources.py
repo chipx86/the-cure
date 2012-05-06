@@ -46,14 +46,18 @@ def load_image(name):
     return get_cached_image(name, _load_image_file)
 
 
-def load_spritesheet_frame(name, pos, size):
+def load_spritesheet_frame(name, pos, spritesheet_rows, spritesheet_cols):
     spritesheet = load_image('sprites/' + name)
 
-    rect = pygame.Rect(pos[0] * size[0], pos[1] * size[1], *size)
+    frame_width = spritesheet.get_width() / spritesheet_cols
+    frame_height = spritesheet.get_height() / spritesheet_rows
+
+    rect = pygame.Rect(pos[0] * frame_width, pos[1] * frame_height,
+                       frame_width, frame_height)
     key = '%s-%r' % (name, rect)
 
     if key not in frame_cache:
-        frame = pygame.Surface(size).convert_alpha()
+        frame = pygame.Surface((frame_width, frame_height)).convert_alpha()
         frame.fill((0, 0, 0, 0))
         frame.blit(spritesheet, (0, 0), rect)
         frame_cache[key] = frame

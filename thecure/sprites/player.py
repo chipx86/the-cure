@@ -9,7 +9,8 @@ from thecure.timer import Timer
 
 class Bullet(Sprite):
     MOVE_SPEED = 10
-    SPRITE_SIZE = (18, 18)
+    SPRITESHEET_ROWS = 1
+    SPRITESHEET_COLS = 1
     OFFSET_X = 6
     OFFSET_Y = 12
 

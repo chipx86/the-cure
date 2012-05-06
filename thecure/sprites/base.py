@@ -186,7 +186,9 @@ class Sprite(BaseSprite):
             'running': [(0, 3), (2, 3)],
         },
     }
-    SPRITE_SIZE = (64, 96)
+    SPRITESHEET_ROWS = 4
+    SPRITESHEET_COLS = 3
+
     MOVE_SPEED = 4
     RUN_SPEED = 8
     ANIM_MS = 150
@@ -239,12 +241,14 @@ class Sprite(BaseSprite):
         self.image = self.generate_image()
         assert self.image
 
-        self.rect.size = self.SPRITE_SIZE
+        self.rect.size = self.image.get_size()
 
     def generate_image(self):
         return load_spritesheet_frame(
             self.name,
-            self._get_spritesheet_frames()[self.anim_frame], self.SPRITE_SIZE)
+            self._get_spritesheet_frames()[self.anim_frame],
+            self.SPRITESHEET_ROWS,
+            self.SPRITESHEET_COLS)
 
     def _get_spritesheet_frames(self):
         return self.SPRITESHEET_FRAMES[self.direction][self.frame_state]
