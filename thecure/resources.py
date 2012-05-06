@@ -50,7 +50,7 @@ def load_spritesheet_frame(name, pos, size):
     spritesheet = load_image('sprites/' + name)
 
     rect = pygame.Rect(pos, size)
-    key = repr(rect)
+    key = '%s-%r' % (name, rect)
 
     if key not in frame_cache:
         frame = pygame.Surface(size).convert_alpha()
