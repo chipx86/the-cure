@@ -86,6 +86,7 @@ class Sprite(BaseSprite):
         self.name = name
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
+        self.speed = self.MOVE_SPEED
 
         self.can_move = True
         self.use_quadtrees = True
@@ -133,6 +134,7 @@ class Sprite(BaseSprite):
     def set_direction(self, direction):
         if self.direction != direction:
             self.direction = direction
+            self.update_velocity()
             self.update_image()
 
     def recompute_direction(self):
@@ -144,6 +146,26 @@ class Sprite(BaseSprite):
             self.set_direction(Direction.RIGHT)
         elif self.velocity[0] < 0:
             self.set_direction(Direction.LEFT)
+
+    def update_velocity(self):
+        x, y = {
+            Direction.LEFT: (-1, None),
+            Direction.RIGHT: (1, None),
+            Direction.UP: (None, -1),
+            Direction.DOWN: (None, 1),
+        }[self.direction]
+
+        if x:
+            x *= self.speed
+        else:
+            x = self.velocity[0]
+
+        if y:
+            y *= self.speed
+        else:
+            y = self.velocity[1]
+
+        self.velocity = (x, y)
 
     def tick(self):
         if self.velocity != (0, 0):

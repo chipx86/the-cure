@@ -49,7 +49,7 @@ class Player(Sprite):
     def move_direction(self, direction):
         self.direction = direction
 
-        self._update_velocity()
+        self.update_velocity()
         self._update_animation()
 
         self.update_image()
@@ -67,39 +67,19 @@ class Player(Sprite):
     def set_running(self, running):
         self.running = running
 
+        if running:
+            self.speed = self.RUN_SPEED
+        else:
+            self.speed = self.MOVE_SPEED
+
         if self.velocity != (0, 0):
-            self._update_velocity()
+            self.update_velocity()
 
         self._update_animation()
 
     def stop_running(self):
         self.running = False
         self._update_animation()
-
-    def _update_velocity(self):
-        x, y = {
-            Direction.LEFT: (-1, None),
-            Direction.RIGHT: (1, None),
-            Direction.UP: (None, -1),
-            Direction.DOWN: (None, 1),
-        }[self.direction]
-
-        if self.running:
-            speed = self.RUN_SPEED
-        else:
-            speed = self.MOVE_SPEED
-
-        if x:
-            x *= speed
-        else:
-            x = self.velocity[0]
-
-        if y:
-            y *= speed
-        else:
-            y = self.velocity[1]
-
-        self.velocity = (x, y)
 
     def _update_animation(self):
         if self.velocity == (0, 0):
