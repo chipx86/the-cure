@@ -114,15 +114,13 @@ class BaseSprite(pygame.sprite.DirtySprite):
             if self_rect and obj_rect:
                 yield obj, self_rect, obj_rect
 
-        #print 'Performing %s checks' % num_checks
-
     def _check_collision(self, left, right, ignore_collidable_flag):
         if (left == right or
-            left.layer.index != right.layer.index or
             (not ignore_collidable_flag and
              ((not left.collidable or not right.collidable) or
               (not left.SHOULD_CHECK_COLLISIONS and
-               not right.SHOULD_CHECK_COLLISIONS)))):
+               not right.SHOULD_CHECK_COLLISIONS))) or
+            left.layer.index != right.layer.index):
             return None, None
 
         left_rects = left.collision_rects or [left.rect]
