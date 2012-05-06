@@ -1,12 +1,60 @@
 from pygame.locals import *
 
+from thecure.resources import load_image
 from thecure.signals import Signal
 from thecure.sprites.base import Direction, Sprite
+from thecure.timer import Timer
+
+
+class Bullet(Sprite):
+    MOVE_SPEED = 10
+    SPRITE_SIZE = (18, 18)
+    OFFSET_X = 6
+    OFFSET_Y = 12
+
+    def __init__(self):
+        super(Bullet, self).__init__('bullet')
+
+    def generate_image(self):
+        return load_image('sprites/bullet')
+
+    def move_beside(self, sprite, direction):
+        if direction == Direction.UP:
+            self.move_to(sprite.rect.right - self.rect.width - self.OFFSET_X,
+                         sprite.rect.y - self.rect.height / 2)
+        elif direction == Direction.DOWN:
+            self.move_to(sprite.rect.x + self.OFFSET_X,
+                         sprite.rect.bottom - 2 * self.rect.height)
+        elif direction == Direction.LEFT:
+            self.move_to(sprite.rect.x + self.rect.width / 2,
+                         sprite.rect.y + self.OFFSET_Y +
+                         (sprite.rect.height - self.rect.height) / 2)
+        elif direction == Direction.RIGHT:
+            self.move_to(sprite.rect.right - 2 * self.rect.width,
+                         sprite.rect.y + self.OFFSET_Y +
+                         (sprite.rect.height - self.rect.height) / 2)
 
 
 class Player(Sprite):
     MAX_LIVES = 3
     MAX_HEALTH = 3
+
+    SHOOT_MS = 500
+
+    SPRITESHEET_FRAMES = {
+        Direction.DOWN: dict(Sprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
+            'shooting': [(128, 0)],
+        }),
+        Direction.LEFT: dict(Sprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
+            'shooting': [(0, 96)],
+        }),
+        Direction.RIGHT: dict(Sprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
+            'shooting': [(0, 192)],
+        }),
+        Direction.UP: dict(Sprite.SPRITESHEET_FRAMES[Direction.UP], **{
+            'shooting': [(128, 288)],
+        }),
+    }
 
     def __init__(self):
         super(Player, self).__init__('player')
@@ -15,7 +63,12 @@ class Player(Sprite):
         self.health_changed = Signal()
         self.lives_changed = Signal()
 
+        # State
         self.running = False
+        self.shooting = False
+        self.shoot_timer = Timer(ms=self.SHOOT_MS,
+                                 cb=self.shoot,
+                                 start_automatically=False)
 
     def reset(self):
         self.health = self.MAX_HEALTH
@@ -32,6 +85,8 @@ class Player(Sprite):
                 self.move_direction(Direction.UP)
             elif event.key == K_DOWN:
                 self.move_direction(Direction.DOWN)
+            elif event.key == K_c:
+                self.set_shooting(True)
             elif event.key in (K_LSHIFT, K_RSHIFT):
                 self.set_running(True)
         elif event.type == KEYUP:
@@ -43,6 +98,8 @@ class Player(Sprite):
                 self.stop_moving_direction(Direction.UP)
             elif event.key == K_DOWN:
                 self.stop_moving_direction(Direction.DOWN)
+            elif event.key == K_c:
+                self.set_shooting(False)
             elif event.key in (K_LSHIFT, K_RSHIFT):
                 self.set_running(False)
 
@@ -64,6 +121,28 @@ class Player(Sprite):
         self.recompute_direction()
         self._update_animation()
 
+    def set_shooting(self, shooting):
+        if self.shooting == shooting:
+            return
+
+        self.shooting = shooting
+
+        if shooting:
+            self.shoot_timer.start()
+            self.shoot()
+        else:
+            self.shoot_timer.stop()
+
+        self._update_animation()
+
+    def shoot(self):
+        bullet = Bullet()
+        self.layer.add(bullet)
+
+        bullet.move_beside(self, self.direction)
+        bullet.set_direction(self.direction)
+        bullet.update_velocity()
+
     def set_running(self, running):
         self.running = running
 
@@ -83,11 +162,14 @@ class Player(Sprite):
 
     def _update_animation(self):
         if self.velocity == (0, 0):
-            if self.frame_state != 'default':
-                self.anim_timer.stop()
+            if self.shooting and self.frame_state != 'shooting':
+                self.frame_state = 'shooting'
+            elif not self.shooting and self.frame_state != 'default':
                 self.frame_state = 'default'
-                self.anim_frame = 0
-                self.update_image()
+            else:
+                return
+
+            self.anim_timer.stop()
         else:
             if self.running and self.frame_state != 'running':
                 self.frame_state = 'running'
@@ -96,6 +178,7 @@ class Player(Sprite):
             else:
                 return
 
-            self.anim_frame = 0
             self.anim_timer.start()
-            self.update_image()
+
+        self.anim_frame = 0
+        self.update_image()
