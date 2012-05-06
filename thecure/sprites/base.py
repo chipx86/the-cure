@@ -51,22 +51,27 @@ class Sprite(BaseSprite):
         Direction.DOWN: {
             'default': [(64, 0)],
             'walking': [(0, 0), (64, 0), (128, 0), (64, 0)],
+            'running': [(0, 0), (128, 0)],
         },
         Direction.LEFT: {
             'default': [(64, 96)],
             'walking': [(0, 96), (64, 96), (128, 96), (64, 96)],
+            'running': [(0, 96), (128, 96)],
         },
         Direction.RIGHT: {
             'default': [(64, 192)],
             'walking': [(0, 192), (64, 192), (128, 192), (64, 192)],
+            'running': [(0, 192), (128, 192)],
         },
         Direction.UP: {
             'default': [(64, 288)],
             'walking': [(0, 288), (64, 288), (128, 288), (64, 288)],
+            'running': [(0, 288), (128, 288)],
         },
     }
     SPRITE_SIZE = (64, 96)
     MOVE_SPEED = 4
+    RUN_SPEED = 8
     ANIM_MS = 150
 
     def __init__(self, name):
@@ -124,6 +129,21 @@ class Sprite(BaseSprite):
     def move_by(self, dx, dy):
         super(Sprite, self).move_by(dx, dy)
         self.moved.emit(dx, dy)
+
+    def set_direction(self, direction):
+        if self.direction != direction:
+            self.direction = direction
+            self.update_image()
+
+    def recompute_direction(self):
+        if self.velocity[1] > 0:
+            self.set_direction(Direction.DOWN)
+        elif self.velocity[1] < 0:
+            self.set_direction(Direction.UP)
+        elif self.velocity[0] > 0:
+            self.set_direction(Direction.RIGHT)
+        elif self.velocity[0] < 0:
+            self.set_direction(Direction.LEFT)
 
     def tick(self):
         if self.velocity != (0, 0):
