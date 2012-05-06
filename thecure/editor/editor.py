@@ -98,6 +98,8 @@ class LevelGrid(gtk.DrawingArea):
                 }
 
         self._reload_layers()
+        self.set_size_request(loader.get_width() * Tile.WIDTH,
+                              loader.get_height() * Tile.HEIGHT)
         self.loaded = True
 
     def write(self, writer):
@@ -415,9 +417,15 @@ class LevelEditor(gtk.Window):
         hbox.pack_start(self.tile_list, False, False, 0)
 
         # Level grid
+        swin = gtk.ScrolledWindow()
+        swin.show()
+        hpaned.pack1(swin)
+        swin.set_shadow_type(gtk.SHADOW_IN)
+        swin.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
+
         self.level_grid = LevelGrid(self.tile_list)
         self.level_grid.show()
-        hpaned.pack1(self.level_grid)
+        swin.add_with_viewport(self.level_grid)
 
         self.level_combo.set_active(0)
         self.layer_combo.set_active(1)
