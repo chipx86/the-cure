@@ -191,8 +191,21 @@ class Player(Sprite):
         elif direction in (Direction.UP, Direction.DOWN):
             self.velocity = (self.velocity[0], 0)
 
+        # The direction may not make any sense anymore, so recompute it.
+        self.recompute_direction()
+
         if self.velocity == (0, 0):
             self.anim_timer.stop()
             self.frame_state = 'default'
             self.anim_frame = 0
             self.update_image()
+
+    def recompute_direction(self):
+        if self.velocity[1] > 0:
+            self.direction = Direction.DOWN
+        elif self.velocity[1] < 0:
+            self.direction = Direction.UP
+        elif self.velocity[0] > 0:
+            self.direction = Direction.RIGHT
+        elif self.velocity[0] < 0:
+            self.direction = Direction.LEFT
