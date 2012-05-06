@@ -66,6 +66,7 @@ class LevelGrid(gtk.DrawingArea):
         self.loaded = False
         self.drawing = False
         self.tiles = {}
+        self.show_active_layer_only = False
 
         self.connect('expose-event', self._on_expose_event)
         self.connect('button-press-event', self._on_button_press)
@@ -88,6 +89,17 @@ class LevelGrid(gtk.DrawingArea):
                 for i in range(loader.get_height())
             ]
 
+            for tile_data in self.loader.iter_tiles(layer_name):
+                tilesheet = _load_tilesheet(tile_data['tile_file'])
+                row = tile_data['row']
+                col = tile_data['col']
+
+                self.tiles[layer_name][row][col] = {
+                    'filename': tile_data['tile_file'],
+                    'tile_x': tile_data['tile_x'],
+                    'tile_y': tile_data['tile_y'],
+                }
+
         self._reload_layers()
         self.loaded = True
 
@@ -101,34 +113,35 @@ class LevelGrid(gtk.DrawingArea):
             for layer_name in self.LAYERS
         ])
 
+    def set_show_active_layer_only(self, show_only):
+        self.show_active_layer_only = show_only
+        self._reload_layers()
+
     def _clear(self):
-        self.image = gtk.gdk.Pixmap(self.window,
-                                    self.loader.get_width() * Tile.WIDTH,
-                                    self.loader.get_height() * Tile.HEIGHT)
+        width = self.loader.get_width() * Tile.WIDTH
+        height = self.loader.get_height() * Tile.HEIGHT
+
+        self.image = gtk.gdk.Pixmap(self.window, width, height)
+        self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
 
     def _load_layer(self, layer_name):
         layer_tiles = self.tiles[layer_name]
 
-        for tile_data in self.loader.iter_tiles(layer_name):
-            tilesheet = _load_tilesheet(tile_data['tile_file'])
-            row = tile_data['row']
-            col = tile_data['col']
+        for row, row_data in enumerate(self.tiles[layer_name]):
+            for col, col_data in enumerate(row_data):
+                if col_data is None:
+                    continue
 
-            if not self.loaded:
-                layer_tiles[row][col] = {
-                    'filename': tile_data['tile_file'],
-                    'tile_x': tile_data['tile_x'],
-                    'tile_y': tile_data['tile_y'],
-                }
+                tilesheet = _load_tilesheet(col_data['filename'])
 
-            self.image.draw_pixbuf(self.gc,
-                                   tilesheet,
-                                   int(tile_data['tile_x'] * Tile.WIDTH),
-                                   int(tile_data['tile_y'] * Tile.HEIGHT),
-                                   col * Tile.WIDTH,
-                                   row * Tile.HEIGHT,
-                                   Tile.WIDTH,
-                                   Tile.HEIGHT)
+                self.image.draw_pixbuf(self.gc,
+                                       tilesheet,
+                                       int(col_data['tile_x'] * Tile.WIDTH),
+                                       int(col_data['tile_y'] * Tile.HEIGHT),
+                                       col * Tile.WIDTH,
+                                       row * Tile.HEIGHT,
+                                       Tile.WIDTH,
+                                       Tile.HEIGHT)
 
     def set_current_layer(self, index):
         if index != self.current_layer:
@@ -141,7 +154,8 @@ class LevelGrid(gtk.DrawingArea):
         self._clear()
 
         for i in range(self.current_layer + 1):
-            self._load_layer(self.LAYERS[i])
+            if not self.show_active_layer_only or self.current_layer == i:
+                self._load_layer(self.LAYERS[i])
 
         self.queue_draw()
 
@@ -366,6 +380,11 @@ class LevelEditor(gtk.Window):
         self.layer_combo.append_text('Foreground Layer')
         self.layer_combo.connect('changed', lambda w: self._on_layer_changed())
 
+        show_only = gtk.CheckButton('Show only this layer')
+        show_only.show()
+        self.sidebar.pack_start(show_only, False, False, 0)
+        show_only.connect('toggled', self._on_show_active_layer_only_toggled)
+
         # Shifts
         hbox = gtk.HBox(False, 12)
         hbox.show()
@@ -406,7 +425,7 @@ class LevelEditor(gtk.Window):
         hpaned.pack1(self.level_grid)
 
         self.level_combo.set_active(0)
-        self.layer_combo.set_active(2)
+        self.layer_combo.set_active(1)
 
     def load_level(self):
         loader = LevelLoader(self.level_combo.get_active_text())
@@ -426,6 +445,9 @@ class LevelEditor(gtk.Window):
 
     def _on_shift_y_toggled(self, w):
         self.tile_list.set_shift_y(w.get_active())
+
+    def _on_show_active_layer_only_toggled(self, w):
+        self.level_grid.set_show_active_layer_only(w.get_active())
 
 
 def main():
