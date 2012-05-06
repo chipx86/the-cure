@@ -200,6 +200,7 @@ class Sprite(BaseSprite):
         self.name = name or self.NAME
         assert self.name
 
+        self.started = False
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
         self.speed = self.MOVE_SPEED
@@ -305,6 +306,9 @@ class Sprite(BaseSprite):
             self.set_direction(Direction.LEFT)
 
     def update_velocity(self):
+        if not self.started:
+            return
+
         x, y = {
             Direction.LEFT: (-1, None),
             Direction.RIGHT: (1, None),
@@ -325,7 +329,7 @@ class Sprite(BaseSprite):
         self.velocity = (x, y)
 
     def tick(self):
-        if self.velocity != (0, 0):
+        if self.started and self.velocity != (0, 0):
             self.move_by(*self.velocity)
 
     def _on_anim_tick(self):

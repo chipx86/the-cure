@@ -154,9 +154,9 @@ class Player(WalkingSprite):
         self.layer.add(bullet)
 
         bullet.move_beside(self, self.direction)
+        bullet.start()
         bullet.set_direction(self.direction)
         bullet.update_velocity()
-        bullet.start()
 
     def should_adjust_position_with(self, obj, dx, dy):
         return not isinstance(obj, Bullet) or obj.owner_sprite != self
