@@ -49,24 +49,24 @@ class BaseSprite(pygame.sprite.DirtySprite):
 class Sprite(BaseSprite):
     SPRITESHEET_FRAMES = {
         Direction.DOWN: {
-            'default': [(32, 0)],
-            'walking': [(0, 0), (32, 0), (64, 0), (32, 0)],
+            'default': [(64, 0)],
+            'walking': [(0, 0), (64, 0), (128, 0), (64, 0)],
         },
         Direction.LEFT: {
-            'default': [(32, 48)],
-            'walking': [(0, 48), (32, 48), (64, 48), (32, 48)],
+            'default': [(64, 96)],
+            'walking': [(0, 96), (64, 96), (128, 96), (64, 96)],
         },
         Direction.RIGHT: {
-            'default': [(32, 96)],
-            'walking': [(0, 96), (32, 96), (64, 96), (32, 96)],
+            'default': [(64, 192)],
+            'walking': [(0, 192), (64, 192), (128, 192), (64, 192)],
         },
         Direction.UP: {
-            'default': [(32, 144)],
-            'walking': [(0, 144), (32, 144), (64, 144), (32, 144)],
+            'default': [(64, 288)],
+            'walking': [(0, 288), (64, 288), (128, 288), (64, 288)],
         },
     }
-    SPRITE_SIZE = (32, 48)
-    MOVE_SPEED = 2
+    SPRITE_SIZE = (64, 96)
+    MOVE_SPEED = 4
     ANIM_MS = 150
 
     def __init__(self, name):

@@ -5,8 +5,8 @@ from thecure.sprites import BaseSprite
 
 
 class Tile(BaseSprite):
-    WIDTH = 32
-    HEIGHT = 32
+    WIDTH = 64
+    HEIGHT = 64
 
     def __init__(self, filename, tile_offset):
         super(Tile, self).__init__()
