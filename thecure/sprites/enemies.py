@@ -1,8 +1,7 @@
 from pygame.locals import *
 
 from thecure import get_engine
-from thecure.signals import Signal
-from thecure.sprites.base import Direction, Sprite, WalkingSprite
+from thecure.sprites.base import WalkingSprite
 
 
 class Enemy(WalkingSprite):

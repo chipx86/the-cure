@@ -37,7 +37,7 @@ class Camera(object):
         self.rect.clamp_ip(
             pygame.Rect(0, 0, *self.engine.active_level.size))
 
-        old_player_rect = player_rect
+        self.old_player_rect = player_rect
 
 
 class TheCureEngine(object):

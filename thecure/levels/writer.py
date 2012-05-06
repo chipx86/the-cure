@@ -1,6 +1,3 @@
-import sys
-
-
 try:
     from json import dumps
 except ImportError:

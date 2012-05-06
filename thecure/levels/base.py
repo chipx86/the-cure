@@ -1,9 +1,8 @@
 import pygame
 from pygame.locals import *
 
-from thecure.layers import QuadTree, Layer
+from thecure.layers import Layer
 from thecure.levels.loader import LevelLoader
-from thecure.signals import Signal
 from thecure.sprites import Tile
 
 

@@ -1,5 +1,3 @@
-import pygame
-
 from thecure.resources import load_spritesheet_frame
 from thecure.sprites import BaseSprite
 

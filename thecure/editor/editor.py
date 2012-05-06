@@ -1,5 +1,3 @@
-import json
-import os
 import sys
 
 try:
@@ -15,7 +13,7 @@ except:
 from thecure.levels import get_levels
 from thecure.levels.loader import LevelLoader
 from thecure.levels.writer import LevelWriter
-from thecure.resources import get_image_filename, get_level_filename
+from thecure.resources import get_image_filename
 from thecure.sprites import Tile
 
 
@@ -90,7 +88,6 @@ class LevelGrid(gtk.DrawingArea):
             ]
 
             for tile_data in self.loader.iter_tiles(layer_name):
-                tilesheet = _load_tilesheet(tile_data['tile_file'])
                 row = tile_data['row']
                 col = tile_data['col']
 
@@ -125,8 +122,6 @@ class LevelGrid(gtk.DrawingArea):
         self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
 
     def _load_layer(self, layer_name):
-        layer_tiles = self.tiles[layer_name]
-
         for row, row_data in enumerate(self.tiles[layer_name]):
             for col, col_data in enumerate(row_data):
                 if col_data is None:

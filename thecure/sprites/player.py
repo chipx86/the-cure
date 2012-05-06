@@ -1,7 +1,5 @@
-import pygame
 from pygame.locals import *
 
-from thecure.resources import load_image
 from thecure.signals import Signal
 from thecure.sprites.base import Direction, Sprite, WalkingSprite
 from thecure.timer import Timer
