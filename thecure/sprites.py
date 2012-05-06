@@ -3,6 +3,7 @@ from pygame.locals import *
 
 from thecure.resources import load_spritesheet_frame
 from thecure.signals import Signal
+from thecure.timer import Timer
 
 
 class Direction(object):
@@ -14,13 +15,26 @@ class Direction(object):
 
 class Sprite(pygame.sprite.DirtySprite):
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: [(0, 0), (32, 0), (64, 0)],
-        Direction.LEFT: [(0, 48), (32, 48), (64, 48)],
-        Direction.RIGHT: [(0, 96), (32, 96), (64, 96)],
-        Direction.UP: [(0, 144), (32, 144), (64, 144)],
+        Direction.DOWN: {
+            'standing': [(32, 0)],
+            'walking': [(0, 0), (32, 0), (64, 0), (32, 0)],
+        },
+        Direction.LEFT: {
+            'standing': [(32, 48)],
+            'walking': [(0, 48), (32, 48), (64, 48), (32, 48)],
+        },
+        Direction.RIGHT: {
+            'standing': [(32, 96)],
+            'walking': [(0, 96), (32, 96), (64, 96), (32, 96)],
+        },
+        Direction.UP: {
+            'standing': [(32, 144)],
+            'walking': [(0, 144), (32, 144), (64, 144), (32, 144)],
+        },
     }
     SPRITE_SIZE = (32, 48)
     MOVE_SPEED = 6
+    ANIM_MS = 150
 
     def __init__(self, name):
         super(Sprite, self).__init__()
@@ -38,6 +52,14 @@ class Sprite(pygame.sprite.DirtySprite):
         self.dirty = 2
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
+
+        self.frame_state = 'walking'
+        self.anim_frame = 0
+        self.anim_timer = None
+
+    def start(self):
+        self.anim_timer = Timer(ms=self.ANIM_MS,
+                                cb=self._on_anim_tick)
 
     def show(self):
         if not self.visible:
@@ -64,7 +86,7 @@ class Sprite(pygame.sprite.DirtySprite):
     def generate_image(self):
         return load_spritesheet_frame(
             self.name,
-            self.SPRITESHEET_FRAMES[self.direction][0], self.SPRITE_SIZE)
+            self._get_spritesheet_frames()[self.anim_frame], self.SPRITE_SIZE)
 
     def move_to(self, x, y):
         self.move_by(x - self.rect.x, y - self.rect.y)
@@ -81,6 +103,20 @@ class Sprite(pygame.sprite.DirtySprite):
 
     def tick(self):
         pass
+
+    def _get_spritesheet_frames(self):
+        return self.SPRITESHEET_FRAMES[self.direction][self.frame_state]
+
+    def _on_anim_tick(self):
+        frames = self._get_spritesheet_frames()
+
+        self.anim_frame += 1
+
+        if self.anim_frame == len(frames):
+            self.anim_frame = 0
+
+        self.dirty = 2
+        self.update_image()
 
 
 class Player(Sprite):

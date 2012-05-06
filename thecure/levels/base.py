@@ -190,7 +190,11 @@ class Level(object):
         self.setup()
 
     def setup(self):
-        pass
+       pass
+
+    def start(self):
+       for sprite in self.group:
+           sprite.start()
 
     def draw(self, screen):
         self.draw_bg(screen)

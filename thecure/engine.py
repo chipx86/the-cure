@@ -102,6 +102,8 @@ class TheCureEngine(object):
         self.camera.update()
         self.player.show()
 
+        self.active_level.start()
+
     def _mainloop(self):
         while 1:
             for event in pygame.event.get():
