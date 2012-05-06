@@ -2,7 +2,7 @@ from thecure import get_engine
 
 
 class Timer(object):
-    def __init__(self, ms, cb, one_shot=False):
+    def __init__(self, ms, cb, one_shot=False, start_automatically=True):
         self.engine = get_engine()
         assert self.engine
 
@@ -14,8 +14,9 @@ class Timer(object):
         self.unpause_cb = None
         self.one_shot = one_shot
         self.tick_cnx = None
+        self.start_automatically = True
 
-        if ms > 0:
+        if ms > 0 and start_automatically:
             self.start()
 
     def start(self):
@@ -31,7 +32,7 @@ class Timer(object):
         self.paused_for_ms = 0
         self.unpause_cb = None
 
-        if self.ms > 0:
+        if self.ms > 0 and self.start_automatically:
             self.start()
 
     def stop(self):
