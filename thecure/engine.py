@@ -3,6 +3,7 @@ import sys
 import pygame
 from pygame.locals import *
 
+from thecure import set_engine
 from thecure.levels import get_levels
 from thecure.resources import get_font_filename
 from thecure.signals import Signal
@@ -45,8 +46,12 @@ class TheCureEngine(object):
     DEBUG_POS = (30, 10)
 
     def __init__(self, screen):
+        set_engine(self)
+
+        # Signals
         self.tick = Signal()
 
+        # Useful objects
         self._debug_font = pygame.font.Font(get_font_filename(), 16)
 
         # State and objects
