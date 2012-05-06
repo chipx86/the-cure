@@ -18,6 +18,17 @@ class Bullet(Sprite):
         super(Bullet, self).__init__()
         self.owner_sprite = owner_sprite
 
+    def move_by(self, *args, **kwargs):
+        super(Bullet, self).move_by(*args, **kwargs)
+
+        if (self.started and
+            (self.rect.x == 0 or
+             self.rect.right == self.layer.parent.size[0] or
+             self.rect.y == 0 or
+             self.rect.bottom == self.layer.parent.size[1])):
+            # We've hit the edge of the screen, so disappear.
+            self.remove()
+
     def move_beside(self, sprite, direction):
         if direction == Direction.UP:
             self.move_to(sprite.rect.right - self.rect.width - self.OFFSET_X,
