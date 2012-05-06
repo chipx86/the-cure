@@ -52,6 +52,9 @@ class Sprite(pygame.sprite.DirtySprite):
         self.direction = Direction.DOWN
         self.velocity = (0, 0)
 
+        self.can_move = True
+        self.can_collide = True
+
         self.frame_state = 'default'
         self.anim_frame = 0
         self.anim_timer = None

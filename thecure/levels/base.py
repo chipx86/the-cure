@@ -41,8 +41,10 @@ class QuadTree(object):
     def add(self, sprite):
         if not self.parent:
             assert sprite not in self.moved_cnxs
-            self.moved_cnxs[sprite] = sprite.moved.connect(
-                lambda dx, dy: self._recompute_sprite(sprite))
+
+            if sprite.can_move:
+                self.moved_cnxs[sprite] = sprite.moved.connect(
+                    lambda dx, dy: self._recompute_sprite(sprite))
 
         # If it's overlapping all regions, or we're a leaf, it
         # belongs in items. Otherwise, stick it in as many regions as
@@ -59,21 +61,26 @@ class QuadTree(object):
 
         assert sprite not in self.sprites
         self.sprites.append(sprite)
-        sprite.quad_trees.add(self)
+
+        if sprite.can_collide:
+            sprite.quad_trees.add(self)
 
     def remove(self, sprite):
         if self.parent:
             self.parent.remove(sprite)
             return
 
-        assert sprite.quad_trees
+        if sprite.can_collide:
+            assert sprite.quad_trees
 
-        for tree in sprite.quad_trees:
-            tree.sprites.remove(sprite)
+            for tree in sprite.quad_trees:
+                tree.sprites.remove(sprite)
 
-        sprite.quad_trees.clear()
-        cnx = self.moved_cnxs.pop(sprite)
-        cnx.disconnect()
+            sprite.quad_trees.clear()
+
+        if sprite.can_move:
+            cnx = self.moved_cnxs.pop(sprite)
+            cnx.disconnect()
 
     def get_sprites(self, rect=None):
         """Returns any sprites stored in quadrants intersecting with rect.
@@ -116,12 +123,12 @@ class QuadTree(object):
                     yield leaf
 
     def _recompute_sprite(self, sprite):
-        assert sprite.quad_trees
+        if sprite.can_collide:
+            assert sprite.quad_trees
 
-
-        if sprite.quad_trees != set(self._get_leaf_trees(sprite.rect)):
-            self.remove(sprite)
-            self.add(sprite)
+            if sprite.quad_trees != set(self._get_leaf_trees(sprite.rect)):
+                self.remove(sprite)
+                self.add(sprite)
 
 
 class Layer(object):
