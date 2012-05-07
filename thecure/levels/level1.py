@@ -4,7 +4,7 @@ from thecure.sprites import Direction, InfectedHuman
 
 class Level1(Level):
     name = 'level1'
-    start_pos = (100, 60)
+    start_pos = (200, 140)
 
     def setup(self):
         boy = InfectedHuman('boy1')
