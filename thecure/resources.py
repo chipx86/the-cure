@@ -46,11 +46,15 @@ def load_image(name):
     return get_cached_image(name, _load_image_file)
 
 
-def load_spritesheet_frame(name, pos, spritesheet_rows, spritesheet_cols):
+def load_spritesheet_frame(name, pos, spritesheet_rows=None,
+                           spritesheet_cols=None, frame_size=None):
     spritesheet = load_image('sprites/' + name)
 
-    frame_width = spritesheet.get_width() / spritesheet_cols
-    frame_height = spritesheet.get_height() / spritesheet_rows
+    if frame_size:
+        frame_width, frame_height = frame_size
+    else:
+        frame_width = spritesheet.get_width() / spritesheet_cols
+        frame_height = spritesheet.get_height() / spritesheet_rows
 
     rect = pygame.Rect(pos[0] * frame_width, pos[1] * frame_height,
                        frame_width, frame_height)
@@ -71,3 +75,7 @@ def get_font_filename():
 
 def get_level_filename(name):
     return os.path.join(DATA_DIR, 'levels', name + '.json')
+
+
+def get_tilesets_path():
+    return os.path.join(DATA_DIR, 'images', 'sprites', 'tiles')

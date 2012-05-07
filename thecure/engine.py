@@ -102,7 +102,7 @@ class TheCureEngine(object):
         self.active_level.main_layer.add(self.player)
         self.player.reset()
 
-        self.surface = pygame.Surface(self.active_level.size)
+        self.surface = pygame.Surface(self.screen.get_size())
 
         self.player.move_to(*self.active_level.start_pos)
         self.camera.update()
@@ -142,9 +142,8 @@ class TheCureEngine(object):
             self.camera.update()
 
         if self.active_level:
-            self.surface.set_clip(self.camera.rect)
-            self.active_level.draw(self.surface)
-            self.screen.blit(self.surface.subsurface(self.camera.rect),
+            self.active_level.draw(self.surface, self.camera.rect)
+            self.screen.blit(self.surface,
                              self.level_draw_pos,
                              self.level_draw_area)
 

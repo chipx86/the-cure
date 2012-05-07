@@ -55,9 +55,22 @@ class Level(object):
         for sprite in self.group:
             sprite.start()
 
-    def draw(self, screen):
+    def draw(self, screen, clip_rect):
         self.draw_bg(screen)
-        self.group.draw(screen)
+
+        offset = (-clip_rect.left, -clip_rect.top)
+
+        for layer in self.layers:
+            count = 0
+            for sprite in set(layer.iterate_in_rect(clip_rect)):
+                if (sprite.visible and sprite.dirty and
+                    clip_rect.colliderect(sprite.rect)):
+                    screen.blit(sprite.image, sprite.rect.move(offset))
+
+                    if sprite.dirty == 1:
+                        sprite.dirty = 0
+
+                    count += 1
 
         if self.engine.debug_rects:
             for sprite in self.group:
@@ -68,7 +81,9 @@ class Level(object):
                     rects = sprite.collision_rects or [sprite.rect]
 
                     for rect in rects:
-                        pygame.draw.rect(screen, (0, 0, 255), rect, 1)
+                        if clip_rect.colliderect(rect):
+                            pygame.draw.rect(screen, (0, 0, 255),
+                                             rect.move(offset), 1)
 
     def draw_bg(self, screen):
         pass

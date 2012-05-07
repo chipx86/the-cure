@@ -16,5 +16,6 @@ class Tile(Sprite):
 
     def update_image(self):
         self.image = load_spritesheet_frame(self.filename, self.tile_offset,
-                                            12, 16)
+                                            frame_size=(self.WIDTH,
+                                                        self.HEIGHT))
         assert self.image
