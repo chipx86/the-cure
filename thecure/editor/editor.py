@@ -22,24 +22,36 @@ _tilesheet_cache = {}
 _tile_cache = {}
 
 
-def _load_tilesheet(name):
-    if name not in _tilesheet_cache:
-        _tilesheet_cache[name] = gtk.gdk.pixbuf_new_from_file(
+def _load_tilesheet(name, zoom_factor=1.0):
+    key = '%s-%s' % (name, zoom_factor)
+
+    if key not in _tilesheet_cache:
+        pixbuf = gtk.gdk.pixbuf_new_from_file(
             get_image_filename('sprites/tiles/' + name))
 
-    return _tilesheet_cache[name]
+        if zoom_factor != 1.0:
+            pixbuf = pixbuf.scale_simple(int(pixbuf.get_width() * zoom_factor),
+                                         int(pixbuf.get_height() * zoom_factor),
+                                         gtk.gdk.INTERP_NEAREST)
+
+        _tilesheet_cache[key] = pixbuf
+
+    return _tilesheet_cache[key]
 
 
-def _load_tile(name, x, y):
-    key = '%s-%s-%s' % (name, x, y)
+def _load_tile(name, x, y, zoom_factor=1.0):
+    key = '%s-%s-%s-%s' % (name, x, y, zoom_factor)
 
     if key not in _tile_cache:
-        pixbuf = _load_tilesheet(name)
+        pixbuf = _load_tilesheet(name, zoom_factor)
 
-        _tile_cache[key] = pixbuf.subpixbuf(int(x * Tile.WIDTH),
-                                            int(y * Tile.HEIGHT),
-                                            Tile.WIDTH,
-                                            Tile.HEIGHT)
+        width = int(Tile.WIDTH * zoom_factor)
+        height = int(Tile.HEIGHT * zoom_factor)
+
+        _tile_cache[key] = pixbuf.subpixbuf(int(x * width),
+                                            int(y * height),
+                                            width,
+                                            height)
 
     return _tile_cache[key]
 
@@ -71,6 +83,10 @@ class LevelGrid(gtk.DrawingArea):
         self.redo_list = []
         self.undo_record_count = 0
         self.recorded_undos = []
+
+        self.zoom_factor = 0.5
+        self.tile_width = int(Tile.WIDTH * self.zoom_factor)
+        self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
 
         self.connect('expose-event', self._on_expose_event)
         self.connect('button-press-event', self._on_button_press)
@@ -125,8 +141,8 @@ class LevelGrid(gtk.DrawingArea):
             self.height)
 
     def _recompute_size(self):
-        self.set_size_request(self.width * Tile.WIDTH,
-                              self.height * Tile.HEIGHT)
+        self.set_size_request(self.width * self.tile_width,
+                              self.height * self.tile_height)
         self._reload_layers()
 
     def set_width(self, width):
@@ -204,8 +220,8 @@ class LevelGrid(gtk.DrawingArea):
         return revert_list
 
     def _clear(self):
-        width = self.width * Tile.WIDTH
-        height = self.height * Tile.HEIGHT
+        width = self.width * self.tile_width
+        height = self.height * self.tile_height
 
         self.image = gtk.gdk.Pixmap(self.window, width, height)
         self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
@@ -216,16 +232,17 @@ class LevelGrid(gtk.DrawingArea):
                 if col_data is None:
                     continue
 
-                tilesheet = _load_tilesheet(col_data['filename'])
+                tilesheet = _load_tilesheet(col_data['filename'],
+                                            self.zoom_factor)
 
                 self.image.draw_pixbuf(self.gc,
                                        tilesheet,
-                                       int(col_data['tile_x'] * Tile.WIDTH),
-                                       int(col_data['tile_y'] * Tile.HEIGHT),
-                                       col * Tile.WIDTH,
-                                       row * Tile.HEIGHT,
-                                       Tile.WIDTH,
-                                       Tile.HEIGHT)
+                                       int(col_data['tile_x'] * self.tile_width),
+                                       int(col_data['tile_y'] * self.tile_height),
+                                       col * self.tile_width,
+                                       row * self.tile_height,
+                                       self.tile_width,
+                                       self.tile_height)
 
     def set_current_layer(self, index):
         if index != self.current_layer:
@@ -259,21 +276,22 @@ class LevelGrid(gtk.DrawingArea):
         if not self._is_tile_area_valid(self.cursor_area):
             return
 
-        self._place_tile(tile_area[0] / Tile.WIDTH,
-                         tile_area[1] / Tile.HEIGHT,
+        self._place_tile(tile_area[0] / self.tile_width,
+                         tile_area[1] / self.tile_height,
                          self.tile_list.selected_tile)
 
     def _place_tile(self, tile_x, tile_y, tile):
         tiles = self.tiles[self.LAYERS[self.current_layer]]
-        tile_area = (tile_x * Tile.WIDTH, tile_y * Tile.HEIGHT,
-                     Tile.WIDTH, Tile.HEIGHT)
+        tile_area = (tile_x * self.tile_width, tile_y * self.tile_height,
+                     self.tile_width, self.tile_height)
 
         self.record(tile_x, tile_y)
 
         if tile:
             pixbuf = _load_tile(tile['filename'],
                                 tile['tile_x'],
-                                tile['tile_y'])
+                                tile['tile_y'],
+                                self.zoom_factor)
             self.image.draw_pixbuf(self.gc,
                                    pixbuf,
                                    0,
@@ -291,7 +309,8 @@ class LevelGrid(gtk.DrawingArea):
                 if layer_tile:
                     pixbuf = _load_tile(layer_tile['filename'],
                                         layer_tile['tile_x'],
-                                        layer_tile['tile_y'])
+                                        layer_tile['tile_y'],
+                                        self.zoom_factor)
                     self.image.draw_pixbuf(self.gc,
                                            pixbuf,
                                            0,
@@ -312,8 +331,8 @@ class LevelGrid(gtk.DrawingArea):
         if not self._is_tile_area_valid(area):
             return
 
-        x = area[0] / Tile.WIDTH
-        y = area[1] / Tile.HEIGHT
+        x = area[0] / self.tile_width
+        y = area[1] / self.tile_height
 
         tiles = self.tiles[self.LAYERS[self.current_layer]]
         tile = self.tile_list.selected_tile
@@ -384,14 +403,14 @@ class LevelGrid(gtk.DrawingArea):
 
     def _is_tile_area_valid(self, area):
         return (area is not None and
-                0 <= area[0] < self.width * Tile.WIDTH and
-                0 <= area[1] < self.height * Tile.HEIGHT)
+                0 <= area[0] < self.width * self.tile_width and
+                0 <= area[1] < self.height * self.tile_height)
 
     def _get_tile_area(self, e):
-        return (int(e.x / Tile.WIDTH) * Tile.WIDTH,
-                int(e.y / Tile.HEIGHT) * Tile.HEIGHT,
-                Tile.WIDTH,
-                Tile.HEIGHT)
+        return (int(e.x / self.tile_width) * self.tile_width,
+                int(e.y / self.tile_height) * self.tile_height,
+                self.tile_width,
+                self.tile_height)
 
 
 class TileList(gtk.Table):
@@ -408,19 +427,22 @@ class TileList(gtk.Table):
         self.selected_tile = None
         self.shift_x = False
         self.shift_y = False
+        self.zoom_factor = 0.5
+        self.tile_width = int(Tile.WIDTH * self.zoom_factor)
+        self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
 
         self.set_filename('ground_1.png')
 
     def set_filename(self, filename):
         self.filename = filename
-        self.pixbuf = _load_tilesheet(filename)
+        self.pixbuf = _load_tilesheet(filename, self.zoom_factor)
         assert self.pixbuf
 
         self._reload_tiles()
 
     def _reload_tiles(self):
-        tiles_x = self.pixbuf.get_width() / Tile.WIDTH
-        tiles_y = self.pixbuf.get_height() / Tile.HEIGHT
+        tiles_x = self.pixbuf.get_width() / self.tile_width
+        tiles_y = self.pixbuf.get_height() / self.tile_height
 
         self.foreach(lambda w: w.destroy())
 
@@ -433,7 +455,7 @@ class TileList(gtk.Table):
         image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
         image.show()
         button.add(image)
-        image.set_size_request(Tile.WIDTH, Tile.HEIGHT)
+        image.set_size_request(self.tile_width, self.tile_height)
 
         for y in range(tiles_y):
             attach_y = y
@@ -453,7 +475,7 @@ class TileList(gtk.Table):
 
                     x += 0.5
 
-                tile_pixbuf = _load_tile(self.filename, x, y)
+                tile_pixbuf = _load_tile(self.filename, x, y, self.zoom_factor)
 
                 if not tile_pixbuf:
                     continue
