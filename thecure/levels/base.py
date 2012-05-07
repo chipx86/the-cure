@@ -14,6 +14,7 @@ class Level(object):
     def __init__(self, engine):
         self.engine = engine
         self.layers = []
+        self.event_handlers = []
         self.group = pygame.sprite.LayeredDirty()
 
         self.load_level()
@@ -86,8 +87,18 @@ class Level(object):
                             pygame.draw.rect(screen, (0, 0, 255),
                                              rect.move(offset), 1)
 
+            for eventbox in self.event_handlers:
+                for rect in eventbox.rects:
+                    pygame.draw.rect(screen, (255, 0, 0), rect.move(offset), 1)
+
     def draw_bg(self, screen):
         pass
+
+    def register_for_events(self, obj):
+        self.event_handlers.append(obj)
+
+    def unregister_for_events(self, obj):
+        self.event_handlers.remove(obj)
 
     def on_tick(self):
         self.group.update()

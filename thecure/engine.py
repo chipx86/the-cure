@@ -133,7 +133,14 @@ class TheCureEngine(object):
         elif event.type == KEYDOWN and event.key == K_F3:
             self.debug_rects = not self.debug_rects
         elif self.active_level:
-            self.player.handle_event(event)
+            if not self.player.handle_event(event):
+                player_rects = self.player.get_absolute_collision_rects()
+
+                for eventbox in self.active_level.event_handlers:
+                    for player_rect in player_rects:
+                        if (player_rect.collidelist(eventbox.rects) != -1 and
+                            eventbox.handle_event(event)):
+                            break
 
         return True
 
