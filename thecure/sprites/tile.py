@@ -1,8 +1,9 @@
 from thecure.resources import load_spritesheet_frame
-from thecure.sprites import BaseSprite
+from thecure.sprites import Sprite
 
 
-class Tile(BaseSprite):
+class Tile(Sprite):
+    NAME = 'tile'
     WIDTH = 64
     HEIGHT = 64
 
