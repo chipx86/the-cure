@@ -67,6 +67,10 @@ class LevelGrid(gtk.DrawingArea):
         self.show_active_layer_only = False
         self.width = 0
         self.height = 0
+        self.undo_list = []
+        self.redo_list = []
+        self.undo_record_count = 0
+        self.recorded_undos = []
 
         self.connect('expose-event', self._on_expose_event)
         self.connect('button-press-event', self._on_button_press)
@@ -84,6 +88,8 @@ class LevelGrid(gtk.DrawingArea):
         self.current_layer = len(self.LAYERS) - 1
         self.width = loader.get_width()
         self.height = loader.get_height()
+
+        self.undo_list = []
 
         for layer_name in self.LAYERS:
             self.tiles[layer_name] = [
@@ -155,6 +161,48 @@ class LevelGrid(gtk.DrawingArea):
         self.show_active_layer_only = show_only
         self._reload_layers()
 
+    def begin_record(self):
+        if self.undo_record_count == 0:
+            self.recorded_undos = []
+            self.redo_list = []
+
+        self.undo_record_count += 1
+
+    def end_record(self):
+        if self.undo_record_count > 0:
+            self.undo_record_count -= 1
+
+        if self.undo_record_count == 0:
+            self.undo_list.append(self.recorded_undos)
+            self.recorded_undos = []
+
+    def record(self, x, y):
+        self.recorded_undos.append({
+            'x': x,
+            'y': y,
+            'layer': self.current_layer,
+            'tile': self.tiles[self.LAYERS[self.current_layer]][y][x]
+        })
+
+    def undo(self):
+        if self.undo_list:
+            undos = self.undo_list.pop()
+            self.redo_list.append(self._apply_undos_redos(undos))
+
+    def redo(self):
+        if self.redo_list:
+            redos = self.redo_list.pop()
+            self.undo_list.append(self._apply_undos_redos(redos))
+
+    def _apply_undos_redos(self, items):
+        revert_list = []
+
+        for item in reversed(items):
+            revert_list.append(item)
+            self._place_tile(item['x'], item['y'], item['tile'])
+
+        return revert_list
+
     def _clear(self):
         width = self.width * Tile.WIDTH
         height = self.height * Tile.HEIGHT
@@ -212,31 +260,44 @@ class LevelGrid(gtk.DrawingArea):
             return
 
         self._place_tile(tile_area[0] / Tile.WIDTH,
-                         tile_area[1] / Tile.HEIGHT)
+                         tile_area[1] / Tile.HEIGHT,
+                         self.tile_list.selected_tile)
 
-    def _place_tile(self, tile_x, tile_y):
-        selected_tile = self.tile_list.selected_tile
-
+    def _place_tile(self, tile_x, tile_y, tile):
         tiles = self.tiles[self.LAYERS[self.current_layer]]
         tile_area = (tile_x * Tile.WIDTH, tile_y * Tile.HEIGHT,
                      Tile.WIDTH, Tile.HEIGHT)
 
-        if selected_tile:
-            pixbuf = selected_tile['pixbuf']
+        self.record(tile_x, tile_y)
+
+        if tile:
+            pixbuf = _load_tile(tile['filename'],
+                                tile['tile_x'],
+                                tile['tile_y'])
             self.image.draw_pixbuf(self.gc,
                                    pixbuf,
                                    0,
                                    0,
                                    *tile_area)
 
-            tiles[tile_y][tile_x] = {
-                'filename': selected_tile['filename'],
-                'tile_x': selected_tile['x'],
-                'tile_y': selected_tile['y'],
-            }
+            tiles[tile_y][tile_x] = tile
         else:
             self.image.draw_rectangle(self.bg_gc, True, *tile_area)
             tiles[tile_y][tile_x] = None
+
+            for layer_name in reversed(self.LAYERS):
+                layer_tile = self.tiles[layer_name][tile_y][tile_x]
+
+                if layer_tile:
+                    pixbuf = _load_tile(layer_tile['filename'],
+                                        layer_tile['tile_x'],
+                                        layer_tile['tile_y'])
+                    self.image.draw_pixbuf(self.gc,
+                                           pixbuf,
+                                           0,
+                                           0,
+                                           *tile_area)
+                    break
 
         self.queue_draw_area(*tile_area)
 
@@ -255,7 +316,10 @@ class LevelGrid(gtk.DrawingArea):
         y = area[1] / Tile.HEIGHT
 
         tiles = self.tiles[self.LAYERS[self.current_layer]]
+        tile = self.tile_list.selected_tile
         start_tile = tiles[y][x]
+
+        self.begin_record()
 
         queue = [(x, y)]
 
@@ -271,7 +335,7 @@ class LevelGrid(gtk.DrawingArea):
                     east += 1
 
                 for c in range(west, east + 1):
-                    self._place_tile(c, y)
+                    self._place_tile(c, y, tile)
 
                     for dy in (-1, 1):
                         new_y = y + dy
@@ -279,15 +343,20 @@ class LevelGrid(gtk.DrawingArea):
                         if can_place_at(c, new_y):
                             queue.append((c, new_y))
 
+        self.end_record()
+
     def _on_button_press(self, w, e):
         if e.state & gtk.gdk.SHIFT_MASK:
             self._fill(e)
         else:
+            self.begin_record()
             self._place_tile_from_event(e)
             self.drawing = True
 
     def _on_button_release(self, w, e):
-        self.drawing = False
+        if self.drawing:
+            self.drawing = False
+            self.end_record()
 
     def _on_motion_notify(self, w, e):
         if self.drawing:
@@ -394,10 +463,8 @@ class TileList(gtk.Table):
 
                 button = self._add_button(attach_y + 1, attach_x, {
                     'filename': self.filename,
-                    'x': x,
-                    'y': y,
-                    'tilesheet': self.pixbuf,
-                    'pixbuf': tile_pixbuf,
+                    'tile_x': x,
+                    'tile_y': y,
                 })
                 button.add(image)
 
@@ -435,6 +502,7 @@ class LevelEditor(gtk.Window):
         self.set_resizable(True)
         self.set_size_request(1024, 768)
         self.connect('delete_event', gtk.main_quit)
+        self.connect('key-press-event', self._on_key_press)
 
         hpaned = gtk.HPaned()
         hpaned.show()
@@ -562,6 +630,15 @@ class LevelEditor(gtk.Window):
     def save(self):
         writer = LevelWriter(self.level_combo.get_active_text())
         self.level_grid.write(writer)
+
+    def _on_key_press(self, w, e):
+        if e.state & gtk.gdk.CONTROL_MASK:
+            if e.keyval == ord('z'):
+                self.level_grid.undo()
+                return True
+            elif e.keyval == ord('r'):
+                self.level_grid.redo()
+                return True
 
     def _on_layer_changed(self):
         current_layer = self.layer_combo.get_active()
