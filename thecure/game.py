@@ -14,7 +14,7 @@ def main():
         print 'This game requires pygame 1.9 or higher.'
         return
 
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((1024, 768))
     pygame.display.set_caption('The Cure')
 
     engine = TheCureEngine(screen)
