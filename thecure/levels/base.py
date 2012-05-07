@@ -62,7 +62,8 @@ class Level(object):
 
         for layer in self.layers:
             count = 0
-            for sprite in set(layer.iterate_in_rect(clip_rect)):
+            for sprite in sorted(set(layer.iterate_in_rect(clip_rect)),
+                                 key=lambda s: (s.rect.top, s.rect.left)):
                 if (sprite.visible and sprite.dirty and
                     clip_rect.colliderect(sprite.rect)):
                     screen.blit(sprite.image, sprite.rect.move(offset))
