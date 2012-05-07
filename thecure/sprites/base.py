@@ -52,42 +52,44 @@ class BaseSprite(pygame.sprite.DirtySprite):
         else:
             self.rect.move_ip(dx, dy)
 
-        self.update_collision_rects()
-
     def _move(self, dx=0, dy=0):
+        old_pos = self.rect.topleft
+
         self.rect.move_ip(dx, dy)
         self.rect.left = max(self.rect.left, 0)
         self.rect.right = min(self.rect.right, self.layer.parent.size[0])
-        self.check_collisions(dx, dy)
+
+        if not self.check_collisions(dx, dy):
+            self.rect.topleft = old_pos
 
     def check_collisions(self, dx=0, dy=0):
         old_colliding_objects = set(self._colliding_objects)
         self._colliding_objects = set()
 
-        for obj, self_rect, obj_rect in self.get_collisions():
-            if (self_rect == self.rect and
-                self.should_adjust_position_with(obj, dx, dy)):
-                self.position_beside(obj_rect, dx, dy)
+        allow_move = True
 
+        for obj, self_rect, obj_rect in self.get_collisions():
             obj.handle_collision(self, obj_rect, dx, dy)
-            self.on_collision(dx, dy, obj, self_rect, obj_rect)
+
+            if not self.on_collision(dx, dy, obj, self_rect, obj_rect):
+                allow_move = False
+
             self._colliding_objects.add(obj)
 
         for obj in old_colliding_objects.difference(self._colliding_objects):
             obj.handle_stop_colliding(self)
 
+        return allow_move
+
     def should_adjust_position_with(self, obj, dx, dy):
         return True
 
-    def position_beside(self, rect, dx, dy):
-        if dy < 0:
-            self.rect.top = rect.bottom
-        elif dy > 0:
-            self.rect.bottom = rect.top
-        elif dx < 0:
-            self.rect.left = rect.right
-        elif dx > 0:
-            self.rect.right = rect.left
+    def get_absolute_collision_rects(self):
+        if self.collision_rects:
+            return [rect.move(self.rect.topleft)
+                    for rect in self.collision_rects]
+        else:
+            return [self.rect]
 
     def get_collisions(self, tree=None, ignore_collidable_flag=False):
         if not self.SHOULD_CHECK_COLLISIONS and not ignore_collidable_flag:
@@ -101,6 +103,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         if self.collision_rects:
             self_rect = self.collision_rects[0].unionall(
                 self.collision_rects[1:])
+            self_rect.move_ip(self.rect.topleft)
         else:
             self_rect = self.rect
 
@@ -123,8 +126,8 @@ class BaseSprite(pygame.sprite.DirtySprite):
             left.layer.index != right.layer.index):
             return None, None
 
-        left_rects = left.collision_rects or [left.rect]
-        right_rects = right.collision_rects or [right.rect]
+        left_rects = left.get_absolute_collision_rects()
+        right_rects = right.get_absolute_collision_rects()
 
         for left_index, left_rect in enumerate(left_rects):
             right_index = left_rect.collidelist(right_rects)
@@ -138,9 +141,6 @@ class BaseSprite(pygame.sprite.DirtySprite):
 
         return None, None
 
-    def update_collision_rects(self):
-        pass
-
     def handle_collision(self, obj, rect, dx, dy):
         pass
 
@@ -148,7 +148,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         pass
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
-        pass
+        return False
 
     def update_image(self):
         raise NotImplementedError
@@ -274,6 +274,7 @@ class Sprite(BaseSprite):
         assert self.image
 
         self.rect.size = self.image.get_size()
+        self.update_collision_rects()
 
     def generate_image(self):
         return load_spritesheet_frame(
@@ -304,6 +305,9 @@ class Sprite(BaseSprite):
             self.set_direction(Direction.RIGHT)
         elif self.velocity[0] < 0:
             self.set_direction(Direction.LEFT)
+
+    def update_collision_rects(self):
+        pass
 
     def update_velocity(self):
         if not self.started:

@@ -78,7 +78,7 @@ class Level(object):
                     continue
 
                 if sprite.visible:
-                    rects = sprite.collision_rects or [sprite.rect]
+                    rects = sprite.get_absolute_collision_rects()
 
                     for rect in rects:
                         if clip_rect.colliderect(rect):

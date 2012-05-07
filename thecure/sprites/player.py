@@ -1,3 +1,4 @@
+import pygame
 from pygame.locals import *
 
 from thecure.signals import Signal
@@ -53,6 +54,8 @@ class Bullet(Sprite):
             if obj.health > 0:
                 obj.damage(self.DAMAGE_VALUE)
 
+        return True
+
 
 class Player(WalkingSprite):
     MAX_LIVES = 3
@@ -92,6 +95,12 @@ class Player(WalkingSprite):
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
                                  cb=self.shoot,
                                  start_automatically=False)
+
+    def update_collision_rects(self):
+        self.collision_rects = [
+            pygame.Rect(0, self.rect.height / 2,
+                        self.rect.width, self.rect.height / 2),
+        ]
 
     def reset(self):
         self.health = self.MAX_HEALTH
