@@ -20,11 +20,8 @@ class Level1(Level):
         girl.move_to(1536, 5824)
         girl.set_direction(Direction.UP)
 
-        eventbox = EventBox(self)
-        eventbox.rects.append(pygame.Rect(832, 5760, 192, 192))
-        eventbox.watch_object_moves(self.engine.player)
-        eventbox.object_entered.connect(self._on_entered)
-        eventbox.object_exited.connect(self._on_exited)
+        self.eventboxes['kids'].object_entered.connect(self._on_entered)
+        self.eventboxes['kids'].object_exited.connect(self._on_exited)
 
     def _on_entered(self, obj):
         print 'entered'

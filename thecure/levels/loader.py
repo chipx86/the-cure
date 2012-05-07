@@ -29,11 +29,13 @@ class LevelLoader(object):
         assert 'layers' in self.data
 
         for layer_data in self.data['layers']:
-            yield {
-                'name': layer_data['name'],
-                'index': layer_data['index'],
-                'is_main': layer_data.get('is_main', False)
-            }
+            yield layer_data
+
+    def iter_eventboxes(self):
+        assert self.data
+
+        for name, eventbox in self.data.get('eventboxes', {}).iteritems():
+            yield name, eventbox
 
     def iter_tiles(self, layer_name):
         assert self.data

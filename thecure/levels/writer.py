@@ -10,12 +10,20 @@ class LevelWriter(object):
     def __init__(self, name):
         self.name = name
 
-    def write(self, layers, width, height):
+    def write(self, layers, eventboxes, width, height):
         files_list = []
         files_map = {}
         layer_list = []
         tile_list = []
         tile_map = {}
+        eventboxes_map = {}
+
+        for eventbox in eventboxes:
+            rect = eventbox['rect']
+
+            eventboxes_map[eventbox['name']] = {
+                'rect': [rect.x, rect.y, rect.width, rect.height],
+            }
 
         data = {
             'files': files_list,
@@ -23,6 +31,7 @@ class LevelWriter(object):
             'tiles': tile_list,
             'width': width,
             'height': height,
+            'eventboxes': eventboxes_map,
         }
 
         for i, layer in enumerate(layers):

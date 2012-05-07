@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 
+from thecure.eventbox import EventBox
 from thecure.layers import Layer
 from thecure.levels.loader import LevelLoader
 from thecure.sprites import Tile
@@ -15,6 +16,7 @@ class Level(object):
         self.engine = engine
         self.layers = []
         self.event_handlers = []
+        self.eventboxes = {}
         self.group = pygame.sprite.LayeredDirty()
 
         self.load_level()
@@ -45,6 +47,18 @@ class Level(object):
                 layer.add(tile)
                 tile.move_to(tile_data['col'] * Tile.WIDTH,
                              tile_data['row'] * Tile.HEIGHT)
+
+        for name, eventbox_data in loader.iter_eventboxes():
+            rect = pygame.Rect(eventbox_data['rect'])
+            rect.x *= Tile.WIDTH
+            rect.y *= Tile.HEIGHT
+            rect.width *= Tile.WIDTH
+            rect.height *= Tile.HEIGHT
+
+            eventbox = EventBox(self)
+            eventbox.rects.append(rect)
+            eventbox.watch_object_moves(self.engine.player)
+            self.eventboxes[name] = eventbox
 
     def reset(self):
         self.setup()

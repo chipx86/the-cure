@@ -11,6 +11,9 @@ except:
     sys.stderr.write('PyGTK 2.0 is needed for the level editor.\n')
     sys.exit(1)
 
+import pango
+import pygame
+
 from thecure.levels import get_levels
 from thecure.levels.loader import LevelLoader
 from thecure.levels.writer import LevelWriter
@@ -69,6 +72,10 @@ def _load_tile(name, x, y, zoom_factor=1.0):
 
 
 class LevelGrid(gtk.DrawingArea):
+    PLACE_TILE_ACTION = 'place-tile'
+    ADD_EVENTBOX_ACTION = 'add-eventbox'
+    REMOVE_EVENTBOX_ACTION = 'remove-eventbox'
+
     def __init__(self, editor, tile_list):
         super(LevelGrid, self).__init__()
 
@@ -93,6 +100,8 @@ class LevelGrid(gtk.DrawingArea):
         self.redo_list = []
         self.undo_record_count = 0
         self.recorded_undos = []
+        self.action = None
+        self.eventboxes = []
 
         self.zoom_factor = 0.5
         self.tile_width = int(Tile.WIDTH * self.zoom_factor)
@@ -111,9 +120,11 @@ class LevelGrid(gtk.DrawingArea):
         self.gc = style.fg_gc[gtk.STATE_NORMAL]
         self.bg_gc = self.style.bg_gc[gtk.STATE_NORMAL]
         self.cursor_gc = self.style.bg_gc[gtk.STATE_SELECTED]
+        self.eventbox_gc = self.style.bg_gc[gtk.STATE_SELECTED]
         self.current_layer = len(LAYERS) - 1
         self.width = loader.get_width()
         self.height = loader.get_height()
+        self.eventboxes = []
 
         self.undo_list = []
 
@@ -133,6 +144,14 @@ class LevelGrid(gtk.DrawingArea):
                     'tile_y': tile_data['tile_y'],
                 }
 
+        for name, eventbox_data in self.loader.iter_eventboxes():
+            rect = eventbox_data['rect']
+
+            self.eventboxes.append({
+                'name': name,
+                'rect': pygame.Rect(rect),
+            })
+
         self._reload_layers()
         self._recompute_size()
         self.loaded = True
@@ -147,6 +166,7 @@ class LevelGrid(gtk.DrawingArea):
                 }
                 for layer_name in LAYERS
             ],
+            self.eventboxes,
             self.width,
             self.height)
 
@@ -182,6 +202,9 @@ class LevelGrid(gtk.DrawingArea):
 
         self.height = height
         self._recompute_size()
+
+    def set_action(self, action):
+        self.action = action
 
     def set_show_active_layer_only(self, show_only):
         self.show_active_layer_only = show_only
@@ -271,6 +294,12 @@ class LevelGrid(gtk.DrawingArea):
 
         self.queue_draw()
 
+    def _tiles_rect_to_pixels(self, rect):
+        return pygame.Rect(rect.x * self.tile_width,
+                           rect.y * self.tile_height,
+                           rect.width * self.tile_width,
+                           rect.height * self.tile_height)
+
     def _on_expose_event(self, level_grid, e):
         if self.image:
             self.window.draw_drawable(self.gc, self.image, e.area.x, e.area.y,
@@ -280,6 +309,29 @@ class LevelGrid(gtk.DrawingArea):
             if self.cursor_area:
                 self.window.draw_rectangle(self.cursor_gc, False,
                                            *self.cursor_area)
+
+            if self.current_layer >= LAYERS.index('events'):
+                for eventbox in self.eventboxes:
+                    rect = eventbox['rect']
+
+                    if rect.width <= 0 or rect.height <= 0:
+                        continue
+
+                    pixels_rect = self._tiles_rect_to_pixels(rect)
+
+                    self.window.draw_rectangle(self.eventbox_gc, True,
+                                               *pixels_rect)
+                    layout = self.create_pango_layout(eventbox['name'])
+                    layout.set_width(pixels_rect.width * pango.SCALE)
+                    layout.set_ellipsize(pango.ELLIPSIZE_END)
+                    layout.set_alignment(pango.ALIGN_CENTER)
+
+                    size = layout.get_pixel_size()
+                    self.window.draw_layout(
+                        self.gc,
+                        pixels_rect.x,
+                        pixels_rect.y + (pixels_rect.height - size[1]) / 2,
+                        layout)
 
     def _place_tile_from_event(self, e):
         tile_area = self._get_tile_area(e)
@@ -386,32 +438,80 @@ class LevelGrid(gtk.DrawingArea):
         self.end_record()
 
     def _on_button_press(self, w, e):
-        if e.state & gtk.gdk.SHIFT_MASK:
-            self._fill(e)
-        else:
+        if self.action == self.PLACE_TILE_ACTION:
+            if e.state & gtk.gdk.SHIFT_MASK:
+                self._fill(e)
+            else:
+                self.begin_record()
+                self._place_tile_from_event(e)
+                self.drawing = True
+        elif self.action == self.ADD_EVENTBOX_ACTION:
+            rect = pygame.Rect(self._get_tile_area(e, False))
+
+            for eventbox in self.eventboxes:
+                if eventbox['rect'].contains(rect):
+                    dialog = gtk.Dialog('Rename Event Box',
+                                        self.editor.get_parent(),
+                                        gtk.DIALOG_MODAL |
+                                        gtk.DIALOG_DESTROY_WITH_PARENT,
+                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                                         gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+                    dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+
+                    entry = gtk.Entry()
+                    entry.show()
+                    dialog.vbox.pack_start(entry, False, False, 0)
+                    entry.set_text(eventbox['name'])
+                    entry.set_activates_default(True)
+
+                    response = dialog.run()
+                    eventbox['name'] = entry.get_text()
+                    dialog.destroy()
+
+                    self.queue_draw_area(
+                        *self._tiles_rect_to_pixels(eventbox['rect']))
+                    return
+
             self.begin_record()
-            self._place_tile_from_event(e)
             self.drawing = True
+            self._cur_eventbox_rect = rect
+
+            self.eventboxes.append({
+                'rect': self._cur_eventbox_rect,
+                'name': 'eventbox%s,%s' % self._cur_eventbox_rect.topleft,
+            })
+        elif self.action == self.REMOVE_EVENTBOX_ACTION:
+            rect = pygame.Rect(self._get_tile_area(e, False))
+
+            for eventbox in self.eventboxes:
+                if eventbox['rect'].contains(rect):
+                    self.queue_draw_area(
+                        *self._tiles_rect_to_pixels(eventbox['rect']))
+                    self.eventboxes.remove(eventbox)
+                    break
 
     def _on_button_release(self, w, e):
         if self.drawing:
             self.drawing = False
             self.end_record()
 
+            if self.action == self.ADD_EVENTBOX_ACTION:
+                if (self._cur_eventbox_rect.width <= 0 or
+                    self._cur_eventbox_rect.height <= 0):
+                    self.eventboxes.pop()
+
+                self._cur_eventbox_rect = None
+
     def _on_motion_notify(self, w, e):
         old_cursor_area = self.cursor_area
-        self.cursor_area = self._get_tile_area(e)
+        cursor_tiles_area = self._get_tile_area(e, False)
+        self.cursor_area = self._tiles_rect_to_pixels(cursor_tiles_area)
 
         self.editor.tile_coord_label.set_text(
-            '%s, %s' % (self.cursor_area[0] / self.tile_width,
-                        self.cursor_area[1] / self.tile_height))
+            '%s, %s' % (cursor_tiles_area[0], cursor_tiles_area[1]))
         self.editor.pixels_coord_label.set_text(
             '%s, %s' % (int(self.cursor_area[0] / self.zoom_factor),
                         int(self.cursor_area[1] / self.zoom_factor)))
-
-        if self.drawing:
-            self._place_tile_from_event(e)
-            return
 
         if not self._is_tile_area_valid(self.cursor_area):
             self.cursor_area = None
@@ -429,16 +529,42 @@ class LevelGrid(gtk.DrawingArea):
                                      self.cursor_area[2] + 1,
                                      self.cursor_area[3] + 1)
 
+        if self.action == self.PLACE_TILE_ACTION:
+            if self.drawing:
+                self._place_tile_from_event(e)
+                return
+        elif self.action == self.ADD_EVENTBOX_ACTION:
+            if not self.drawing:
+                return
+
+            self.queue_draw_area(
+                *self._tiles_rect_to_pixels(self._cur_eventbox_rect))
+
+            self._cur_eventbox_rect.width = \
+                cursor_tiles_area[0] + cursor_tiles_area[2] - \
+                self._cur_eventbox_rect.x
+
+            self._cur_eventbox_rect.height = \
+                cursor_tiles_area[1] + cursor_tiles_area[3] - \
+                self._cur_eventbox_rect.y
+
+            self.queue_draw_area(
+                *self._tiles_rect_to_pixels(self._cur_eventbox_rect))
+
     def _is_tile_area_valid(self, area):
         return (area is not None and
                 0 <= area[0] < self.width * self.tile_width and
                 0 <= area[1] < self.height * self.tile_height)
 
-    def _get_tile_area(self, e):
-        return (int(e.x / self.tile_width) * self.tile_width,
-                int(e.y / self.tile_height) * self.tile_height,
-                self.tile_width,
-                self.tile_height)
+    def _get_tile_area(self, e, in_pixels=True):
+        rect = pygame.Rect(e.x / self.tile_width,
+                           e.y / self.tile_height,
+                           1, 1)
+
+        if in_pixels:
+            rect = self._tiles_rect_to_pixels(rect)
+
+        return rect
 
 
 class TileList(gtk.VBox):
@@ -468,13 +594,6 @@ class TileList(gtk.VBox):
         image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
         image.show()
         button.add(image)
-
-        # Event Box button
-#        button = self._create_button({
-#            'type': 'eventbox',
-#        })
-#        button.set_label('EventBox')
-#        self.toolbox.pack_start(button, False, False, 0)
 
         # Tiles window
         swin = gtk.ScrolledWindow()
@@ -574,8 +693,10 @@ class TileList(gtk.VBox):
 
 
 class SpritePane(gtk.VBox):
-    def __init__(self):
+    def __init__(self, editor):
         super(SpritePane, self).__init__(False, 0)
+
+        self.editor = editor
 
         # Spritesheet selector
         self.spritesheet_combo = gtk.combo_box_new_text()
@@ -611,11 +732,47 @@ class SpritePane(gtk.VBox):
 
         self.spritesheet_combo.set_active(0)
 
+    def set_active(self):
+        self.editor.level_grid.set_action(LevelGrid.PLACE_TILE_ACTION)
+
     def _on_shift_x_toggled(self, w):
         self.tile_list.set_shift_x(w.get_active())
 
     def _on_shift_y_toggled(self, w):
         self.tile_list.set_shift_y(w.get_active())
+
+
+class EventBoxPane(gtk.VBox):
+    def __init__(self, editor):
+        super(EventBoxPane, self).__init__(False, 0)
+
+        self.editor = editor
+
+        hbox = gtk.HBox(False, 0)
+        hbox.show()
+        self.pack_start(hbox, False, False, 0)
+
+        self.add_button = gtk.RadioButton(None, 'Add')
+        self.add_button.show()
+        hbox.pack_start(self.add_button, False, False, 0)
+        self.add_button.set_mode(False)
+        self.add_button.connect('toggled', self._update_button_state)
+        group = self.add_button
+
+        self.remove_button = gtk.RadioButton(group, 'Remove')
+        self.remove_button.show()
+        hbox.pack_start(self.remove_button, False, False, 0)
+        self.remove_button.set_mode(False)
+        self.remove_button.connect('toggled', self._update_button_state)
+
+    def set_active(self):
+        self._update_button_state()
+
+    def _update_button_state(self, *args, **kwargs):
+        if self.add_button.get_active():
+            self.editor.level_grid.set_action(LevelGrid.ADD_EVENTBOX_ACTION)
+        elif self.remove_button.get_active():
+            self.editor.level_grid.set_action(LevelGrid.REMOVE_EVENTBOX_ACTION)
 
 
 class LevelEditor(gtk.Window):
@@ -699,9 +856,14 @@ class LevelEditor(gtk.Window):
         show_only.connect('toggled', self._on_show_active_layer_only_toggled)
 
         # Sprite pane
-        self.sprite_pane = SpritePane()
-        self.sprite_pane.show()
+        self.sprite_pane = SpritePane(self)
+        #self.sprite_pane.show()
         self.sidebar.pack_start(self.sprite_pane, True, True, 0)
+
+        # Event box pane
+        self.eventbox_pane = EventBoxPane(self)
+        self.eventbox_pane.show()
+        self.sidebar.pack_start(self.eventbox_pane, True, True, 0)
 
         # Coordinates status
         hbox = gtk.HBox(False, 0)
@@ -761,8 +923,14 @@ class LevelEditor(gtk.Window):
         current_layer = self.layer_combo.get_active()
         self.level_grid.set_current_layer(current_layer)
 
-        is_event_layer = (LAYERS[current_layer] == 'events')
-        self.sprite_pane.set_sensitive(not is_event_layer)
+        if LAYERS[current_layer] == 'events':
+            self.sprite_pane.hide()
+            self.eventbox_pane.show()
+            self.eventbox_pane.set_active()
+        else:
+            self.eventbox_pane.hide()
+            self.sprite_pane.show()
+            self.sprite_pane.set_active()
 
     def _on_show_active_layer_only_toggled(self, w):
         self.level_grid.set_show_active_layer_only(w.get_active())
