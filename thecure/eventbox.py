@@ -5,6 +5,7 @@ class EventBox(object):
     def __init__(self, level):
         self.level = level
         self.rects = []
+        self._moved_cnxs = []
         level.register_for_events(self)
         self.entered_objects = set()
 
@@ -14,8 +15,17 @@ class EventBox(object):
         self.object_entered = Signal()
         self.object_exited = Signal()
 
+    def disconnect(self):
+        self.level.unregister_for_events(self)
+
+        for cnx in self._moved_cnxs:
+            cnx.disconnect()
+
+        self._moved_cnxs = []
+
     def watch_object_moves(self, obj):
-        obj.moved.connect(lambda dx, dy: self.handle_object_move(obj))
+        self._moved_cnxs.append(
+            obj.moved.connect(lambda dx, dy: self.handle_object_move(obj)))
 
     def handle_event(self, event):
         return self.event_fired.emit(event)

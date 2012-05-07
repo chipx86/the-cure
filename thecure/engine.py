@@ -8,6 +8,7 @@ from thecure.levels import get_levels
 from thecure.resources import get_font_filename
 from thecure.signals import Signal
 from thecure.sprites import Player
+from thecure.ui import UIManager
 
 
 class Camera(object):
@@ -63,6 +64,8 @@ class TheCureEngine(object):
         self.levels = []
         self.level_draw_pos = (0, 0)
         self.level_draw_area = None
+
+        self.ui_manager = UIManager(self)
 
         # Debug flags
         self.debug_rects = False
@@ -132,6 +135,8 @@ class TheCureEngine(object):
             self.show_debug_info = not self.show_debug_info
         elif event.type == KEYDOWN and event.key == K_F3:
             self.debug_rects = not self.debug_rects
+        elif self.ui_manager.handle_event(event):
+            pass
         elif self.active_level:
             if not self.player.handle_event(event):
                 player_rects = self.player.get_absolute_collision_rects()
@@ -153,6 +158,8 @@ class TheCureEngine(object):
             self.screen.blit(self.surface,
                              self.level_draw_pos,
                              self.level_draw_area)
+
+        self.ui_manager.draw(self.screen)
 
         if self.show_debug_info:
             debug_str = '%0.f FPS    X: %s    Y: %s' % (

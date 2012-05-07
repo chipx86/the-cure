@@ -20,14 +20,11 @@ class Level1(Level):
         girl.move_to(1536, 5824)
         girl.set_direction(Direction.UP)
 
-        self.eventboxes['kids'].object_entered.connect(self._on_entered)
-        self.eventboxes['kids'].object_exited.connect(self._on_exited)
+        self.eventboxes['kids'].object_entered.connect(
+            lambda obj: self.show_monologue_once('kids',
+                'Even the kids are infected. What have I done...'))
 
-    def _on_entered(self, obj):
-        print 'entered'
-
-    def _on_exited(self, obj):
-        print 'exited'
-
-    def draw_bg(self, surface):
-        surface.fill((237, 243, 255))
+    def show_monologue_once(self, eventbox_name, text):
+        self.engine.ui_manager.show_monologue(text)
+        self.eventboxes[eventbox_name].disconnect()
+        del self.eventboxes[eventbox_name]
