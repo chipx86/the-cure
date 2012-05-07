@@ -440,14 +440,9 @@ class LevelGrid(gtk.DrawingArea):
                 self.tile_height)
 
 
-class TileList(gtk.Table):
-    MAX_COLS = 10
-
+class TileList(gtk.VBox):
     def __init__(self):
-        super(TileList, self).__init__(columns=self.MAX_COLS)
-
-        self.set_row_spacings(0)
-        self.set_col_spacings(0)
+        super(TileList, self).__init__(False, 0)
 
         self._group = None
         self.selected_button = None
@@ -457,6 +452,30 @@ class TileList(gtk.Table):
         self.zoom_factor = 0.5
         self.tile_width = int(Tile.WIDTH * self.zoom_factor)
         self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
+
+        self.toolbox = gtk.HBox(False, 0)
+        self.toolbox.show()
+        self.pack_start(self.toolbox, False, False, 0)
+
+        swin = gtk.ScrolledWindow()
+        swin.show()
+        self.pack_start(swin, True, True, 0)
+        swin.set_shadow_type(gtk.SHADOW_IN)
+        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+        vbox = gtk.VBox(False, 0)
+        vbox.show()
+        swin.add_with_viewport(vbox)
+
+        hbox = gtk.HBox(False, 0)
+        hbox.show()
+        vbox.pack_start(hbox, False, False, 0)
+
+        self.table = gtk.Table()
+        self.table.show()
+        hbox.pack_start(self.table, False, False, 0)
+        self.table.set_row_spacings(0)
+        self.table.set_col_spacings(0)
 
     def set_filename(self, filename):
         self.filename = filename
@@ -469,10 +488,11 @@ class TileList(gtk.Table):
         tiles_x = self.pixbuf.get_width() / self.tile_width
         tiles_y = self.pixbuf.get_height() / self.tile_height
 
-        self.foreach(lambda w: w.destroy())
+        self.table.foreach(lambda w: w.destroy())
 
         # Add the "erase" one
-        button = self._add_button(0, 0)
+        button = self._create_button()
+        self.toolbox.pack_start(button, False, False, 0)
         self.selected_button = button
         button.set_active(True)
         self._group = button
@@ -508,7 +528,7 @@ class TileList(gtk.Table):
                 image = gtk.image_new_from_pixbuf(tile_pixbuf)
                 image.show()
 
-                button = self._add_button(attach_y + 1, attach_x, {
+                button = self._add_button(attach_y, attach_x, {
                     'filename': self.filename,
                     'tile_x': x,
                     'tile_y': y,
@@ -523,14 +543,18 @@ class TileList(gtk.Table):
         self.shift_y = shift
         self._reload_tiles()
 
-    def _add_button(self, row, col, tile_data=None):
+    def _create_button(self, tile_data=None):
         button = gtk.RadioButton(self._group)
         button.show()
-        self.attach(button, col, col + 1, row, row + 1)
         button.set_border_width(0)
         button.set_mode(False)
         button.connect('toggled', lambda w: self._on_clicked(w, tile_data))
 
+        return button
+
+    def _add_button(self, row, col, tile_data=None):
+        button = self._create_button(tile_data)
+        self.table.attach(button, col, col + 1, row, row + 1)
         return button
 
     def _on_clicked(self, w, tile_data):
@@ -649,23 +673,9 @@ class LevelEditor(gtk.Window):
         self.tile_shift_y.connect('toggled', self._on_shift_y_toggled)
 
         # Sprites list
-        swin = gtk.ScrolledWindow()
-        swin.show()
-        self.sidebar.pack_start(swin, True, True, 0)
-        swin.set_shadow_type(gtk.SHADOW_IN)
-        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-
-        vbox = gtk.VBox(False, 0)
-        vbox.show()
-        swin.add_with_viewport(vbox)
-
-        hbox = gtk.HBox(False, 0)
-        hbox.show()
-        vbox.pack_start(hbox, False, False, 0)
-
         self.tile_list = TileList()
         self.tile_list.show()
-        hbox.pack_start(self.tile_list, False, False, 0)
+        self.sidebar.pack_start(self.tile_list, True, True, 0)
 
         # Coordinates status
         hbox = gtk.HBox(False, 0)
