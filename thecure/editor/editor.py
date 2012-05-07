@@ -224,7 +224,7 @@ class LevelGrid(gtk.DrawingArea):
         for item in reversed(items):
             revert_list.append(item)
             self._place_tile(item['x'], item['y'], item['tile'],
-                             item['layer'])
+                             item['layer'], record=False)
 
         return revert_list
 
@@ -311,13 +311,14 @@ class LevelGrid(gtk.DrawingArea):
                                0,
                                *tile_area)
 
-    def _place_tile(self, tile_x, tile_y, tile, layer=None):
+    def _place_tile(self, tile_x, tile_y, tile, layer=None, record=True):
         layer = layer or self.current_layer
         tiles = self.tiles[self.LAYERS[layer]]
         tile_area = (tile_x * self.tile_width, tile_y * self.tile_height,
                      self.tile_width, self.tile_height)
 
-        self.record(tile_x, tile_y)
+        if record:
+            self.record(tile_x, tile_y)
 
         if tile:
             if tiles[tile_y][tile_x]:
