@@ -18,6 +18,17 @@ from thecure.resources import get_image_filename, get_tilesets_path
 from thecure.sprites import Tile
 
 
+# XXX Hard-coding these is fragile.
+LAYERS = ['bg', 'bg2', 'main', 'fg', 'events']
+LAYER_NAMES = [
+    'Background Layer',
+    'Background Detail Layer',
+    'Main Layer',
+    'Foreground Layer',
+    'Events',
+]
+DEFAULT_LAYER = LAYERS.index('main')
+
 # We can't reuse the cache in resources, since we need GdkPixbufs.
 _tilesheet_cache = {}
 _tile_cache = {}
@@ -58,16 +69,6 @@ def _load_tile(name, x, y, zoom_factor=1.0):
 
 
 class LevelGrid(gtk.DrawingArea):
-    # XXX Hard-coding these is fragile.
-    LAYERS = ['bg', 'bg2', 'main', 'fg']
-    LAYER_NAMES = [
-        'Background Layer',
-        'Background Detail Layer',
-        'Main Layer',
-        'Foreground Layer',
-    ]
-    DEFAULT_LAYER = LAYERS.index('main')
-
     def __init__(self, editor, tile_list):
         super(LevelGrid, self).__init__()
 
@@ -110,13 +111,13 @@ class LevelGrid(gtk.DrawingArea):
         self.gc = style.fg_gc[gtk.STATE_NORMAL]
         self.bg_gc = self.style.bg_gc[gtk.STATE_NORMAL]
         self.cursor_gc = self.style.bg_gc[gtk.STATE_SELECTED]
-        self.current_layer = len(self.LAYERS) - 1
+        self.current_layer = len(LAYERS) - 1
         self.width = loader.get_width()
         self.height = loader.get_height()
 
         self.undo_list = []
 
-        for layer_name in self.LAYERS:
+        for layer_name in LAYERS:
             self.tiles[layer_name] = [
                 [None] * self.width
                 for i in range(self.height)
@@ -144,7 +145,7 @@ class LevelGrid(gtk.DrawingArea):
                     'is_main': layer_name == 'main',
                     'tiles': self.tiles[layer_name]
                 }
-                for layer_name in self.LAYERS
+                for layer_name in LAYERS
             ],
             self.width,
             self.height)
@@ -206,7 +207,7 @@ class LevelGrid(gtk.DrawingArea):
             'x': x,
             'y': y,
             'layer': self.current_layer,
-            'tile': self.tiles[self.LAYERS[self.current_layer]][y][x]
+            'tile': self.tiles[LAYERS[self.current_layer]][y][x]
         })
 
     def undo(self):
@@ -266,7 +267,7 @@ class LevelGrid(gtk.DrawingArea):
 
         for i in range(self.current_layer + 1):
             if not self.show_active_layer_only or self.current_layer == i:
-                self._load_layer(self.LAYERS[i])
+                self._load_layer(LAYERS[i])
 
         self.queue_draw()
 
@@ -295,7 +296,7 @@ class LevelGrid(gtk.DrawingArea):
                      self.tile_width, self.tile_height)
         self.image.draw_rectangle(self.bg_gc, True, *tile_area)
 
-        for layer_name in self.LAYERS:
+        for layer_name in LAYERS:
             layer_tile = self.tiles[layer_name][y][x]
 
             if layer_tile:
@@ -314,7 +315,7 @@ class LevelGrid(gtk.DrawingArea):
 
     def _place_tile(self, tile_x, tile_y, tile, layer=None, record=True):
         layer = layer or self.current_layer
-        tiles = self.tiles[self.LAYERS[layer]]
+        tiles = self.tiles[LAYERS[layer]]
         tile_area = (tile_x * self.tile_width, tile_y * self.tile_height,
                      self.tile_width, self.tile_height)
 
@@ -354,7 +355,7 @@ class LevelGrid(gtk.DrawingArea):
         x = area[0] / self.tile_width
         y = area[1] / self.tile_height
 
-        tiles = self.tiles[self.LAYERS[self.current_layer]]
+        tiles = self.tiles[LAYERS[self.current_layer]]
         tile = self.tile_list.selected_tile
         start_tile = tiles[y][x]
 
@@ -457,6 +458,25 @@ class TileList(gtk.VBox):
         self.toolbox.show()
         self.pack_start(self.toolbox, False, False, 0)
 
+        # Erase button
+        button = self._create_button()
+        self.toolbox.pack_start(button, False, False, 0)
+        self.selected_button = button
+        button.set_active(True)
+        self._group = button
+
+        image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
+        image.show()
+        button.add(image)
+
+        # Event Box button
+#        button = self._create_button({
+#            'type': 'eventbox',
+#        })
+#        button.set_label('EventBox')
+#        self.toolbox.pack_start(button, False, False, 0)
+
+        # Tiles window
         swin = gtk.ScrolledWindow()
         swin.show()
         self.pack_start(swin, True, True, 0)
@@ -489,18 +509,6 @@ class TileList(gtk.VBox):
         tiles_y = self.pixbuf.get_height() / self.tile_height
 
         self.table.foreach(lambda w: w.destroy())
-
-        # Add the "erase" one
-        button = self._create_button()
-        self.toolbox.pack_start(button, False, False, 0)
-        self.selected_button = button
-        button.set_active(True)
-        self._group = button
-
-        image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
-        image.show()
-        button.add(image)
-        image.set_size_request(self.tile_width, self.tile_height)
 
         for y in range(tiles_y):
             attach_y = y
@@ -563,6 +571,51 @@ class TileList(gtk.VBox):
 
         self.selected_button = w
         self.selected_tile = tile_data
+
+
+class SpritePane(gtk.VBox):
+    def __init__(self):
+        super(SpritePane, self).__init__(False, 0)
+
+        # Spritesheet selector
+        self.spritesheet_combo = gtk.combo_box_new_text()
+        self.spritesheet_combo.show()
+        self.pack_start(self.spritesheet_combo, False, False, 0)
+
+        for path in sorted(os.listdir(get_tilesets_path())):
+            self.spritesheet_combo.append_text(path)
+
+        self.spritesheet_combo.connect(
+            'changed',
+            lambda w: self.tile_list.set_filename(w.get_active_text()))
+
+        # Shifts
+        hbox = gtk.HBox(False, 12)
+        hbox.show()
+        self.pack_start(hbox, False, False, 0)
+
+        self.tile_shift_x = gtk.CheckButton("Shift X")
+        self.tile_shift_x.show()
+        hbox.pack_start(self.tile_shift_x, False, False, 0)
+        self.tile_shift_x.connect('toggled', self._on_shift_x_toggled)
+
+        self.tile_shift_y = gtk.CheckButton("Shift Y")
+        self.tile_shift_y.show()
+        hbox.pack_start(self.tile_shift_y, False, False, 0)
+        self.tile_shift_y.connect('toggled', self._on_shift_y_toggled)
+
+        # Tile list
+        self.tile_list = TileList()
+        self.tile_list.show()
+        self.pack_start(self.tile_list, True, True, 0)
+
+        self.spritesheet_combo.set_active(0)
+
+    def _on_shift_x_toggled(self, w):
+        self.tile_list.set_shift_x(w.get_active())
+
+    def _on_shift_y_toggled(self, w):
+        self.tile_list.set_shift_y(w.get_active())
 
 
 class LevelEditor(gtk.Window):
@@ -635,7 +688,7 @@ class LevelEditor(gtk.Window):
         self.layer_combo.show()
         self.sidebar.pack_start(self.layer_combo, False, False, 0)
 
-        for name in LevelGrid.LAYER_NAMES:
+        for name in LAYER_NAMES:
             self.layer_combo.append_text(name)
 
         self.layer_combo.connect('changed', lambda w: self._on_layer_changed())
@@ -645,37 +698,10 @@ class LevelEditor(gtk.Window):
         self.sidebar.pack_start(show_only, False, False, 0)
         show_only.connect('toggled', self._on_show_active_layer_only_toggled)
 
-        # Spritesheet selector
-        self.spritesheet_combo = gtk.combo_box_new_text()
-        self.spritesheet_combo.show()
-        self.sidebar.pack_start(self.spritesheet_combo, False, False, 0)
-
-        for path in sorted(os.listdir(get_tilesets_path())):
-            self.spritesheet_combo.append_text(path)
-
-        self.spritesheet_combo.connect(
-            'changed',
-            lambda w: self.tile_list.set_filename(w.get_active_text()))
-
-        # Shifts
-        hbox = gtk.HBox(False, 12)
-        hbox.show()
-        self.sidebar.pack_start(hbox, False, False, 0)
-
-        self.tile_shift_x = gtk.CheckButton("Shift X")
-        self.tile_shift_x.show()
-        hbox.pack_start(self.tile_shift_x, False, False, 0)
-        self.tile_shift_x.connect('toggled', self._on_shift_x_toggled)
-
-        self.tile_shift_y = gtk.CheckButton("Shift Y")
-        self.tile_shift_y.show()
-        hbox.pack_start(self.tile_shift_y, False, False, 0)
-        self.tile_shift_y.connect('toggled', self._on_shift_y_toggled)
-
-        # Sprites list
-        self.tile_list = TileList()
-        self.tile_list.show()
-        self.sidebar.pack_start(self.tile_list, True, True, 0)
+        # Sprite pane
+        self.sprite_pane = SpritePane()
+        self.sprite_pane.show()
+        self.sidebar.pack_start(self.sprite_pane, True, True, 0)
 
         # Coordinates status
         hbox = gtk.HBox(False, 0)
@@ -705,13 +731,12 @@ class LevelEditor(gtk.Window):
         swin.set_shadow_type(gtk.SHADOW_IN)
         swin.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
 
-        self.level_grid = LevelGrid(self, self.tile_list)
+        self.level_grid = LevelGrid(self, self.sprite_pane.tile_list)
         self.level_grid.show()
         swin.add_with_viewport(self.level_grid)
 
         self.level_combo.set_active(0)
-        self.layer_combo.set_active(LevelGrid.DEFAULT_LAYER)
-        self.spritesheet_combo.set_active(0)
+        self.layer_combo.set_active(DEFAULT_LAYER)
 
     def load_level(self):
         loader = LevelLoader(self.level_combo.get_active_text())
@@ -736,11 +761,8 @@ class LevelEditor(gtk.Window):
         current_layer = self.layer_combo.get_active()
         self.level_grid.set_current_layer(current_layer)
 
-    def _on_shift_x_toggled(self, w):
-        self.tile_list.set_shift_x(w.get_active())
-
-    def _on_shift_y_toggled(self, w):
-        self.tile_list.set_shift_y(w.get_active())
+        is_event_layer = (LAYERS[current_layer] == 'events')
+        self.sprite_pane.set_sensitive(not is_event_layer)
 
     def _on_show_active_layer_only_toggled(self, w):
         self.level_grid.set_show_active_layer_only(w.get_active())
