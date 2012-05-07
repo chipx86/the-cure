@@ -68,9 +68,10 @@ class LevelGrid(gtk.DrawingArea):
     ]
     DEFAULT_LAYER = LAYERS.index('main')
 
-    def __init__(self, tile_list):
+    def __init__(self, editor, tile_list):
         super(LevelGrid, self).__init__()
 
+        self.editor = editor
         self.tile_list = tile_list
 
         self.add_events(gtk.gdk.POINTER_MOTION_MASK |
@@ -397,12 +398,19 @@ class LevelGrid(gtk.DrawingArea):
             self.end_record()
 
     def _on_motion_notify(self, w, e):
+        old_cursor_area = self.cursor_area
+        self.cursor_area = self._get_tile_area(e)
+
+        self.editor.tile_coord_label.set_text(
+            '%s, %s' % (self.cursor_area[0] / self.tile_width,
+                        self.cursor_area[1] / self.tile_height))
+        self.editor.pixels_coord_label.set_text(
+            '%s, %s' % (int(self.cursor_area[0] / self.zoom_factor),
+                        int(self.cursor_area[1] / self.zoom_factor)))
+
         if self.drawing:
             self._place_tile_from_event(e)
             return
-
-        old_cursor_area = self.cursor_area
-        self.cursor_area = self._get_tile_area(e)
 
         if not self._is_tile_area_valid(self.cursor_area):
             self.cursor_area = None
@@ -659,6 +667,27 @@ class LevelEditor(gtk.Window):
         self.tile_list.show()
         hbox.pack_start(self.tile_list, False, False, 0)
 
+        # Coordinates status
+        hbox = gtk.HBox(False, 0)
+        hbox.show()
+        self.sidebar.pack_start(hbox, False, False, 0)
+
+        label = gtk.Label("Tile: ")
+        label.show()
+        hbox.pack_start(label, False, False, 0)
+
+        self.tile_coord_label = gtk.Label()
+        self.tile_coord_label.show()
+        hbox.pack_start(self.tile_coord_label, False, False, 0)
+
+        label = gtk.Label("; Pixels: ")
+        label.show()
+        hbox.pack_start(label, False, False, 0)
+
+        self.pixels_coord_label = gtk.Label()
+        self.pixels_coord_label.show()
+        hbox.pack_start(self.pixels_coord_label, False, False, 0)
+
         # Level grid
         swin = gtk.ScrolledWindow()
         swin.show()
@@ -666,7 +695,7 @@ class LevelEditor(gtk.Window):
         swin.set_shadow_type(gtk.SHADOW_IN)
         swin.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
 
-        self.level_grid = LevelGrid(self.tile_list)
+        self.level_grid = LevelGrid(self, self.tile_list)
         self.level_grid.show()
         swin.add_with_viewport(self.level_grid)
 
