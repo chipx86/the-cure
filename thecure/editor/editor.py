@@ -216,7 +216,8 @@ class LevelGrid(gtk.DrawingArea):
 
         for item in reversed(items):
             revert_list.append(item)
-            self._place_tile(item['x'], item['y'], item['tile'])
+            self._place_tile(item['x'], item['y'], item['tile'],
+                             item['layer'])
 
         return revert_list
 
@@ -281,23 +282,44 @@ class LevelGrid(gtk.DrawingArea):
                          tile_area[1] / self.tile_height,
                          self.tile_list.selected_tile)
 
-    def _place_tile(self, tile_x, tile_y, tile):
-        tiles = self.tiles[self.LAYERS[self.current_layer]]
+    def _redraw_tiles(self, x, y):
+        tile_area = (x * self.tile_width, y * self.tile_height,
+                     self.tile_width, self.tile_height)
+        self.image.draw_rectangle(self.bg_gc, True, *tile_area)
+
+        for layer_name in self.LAYERS:
+            layer_tile = self.tiles[layer_name][y][x]
+
+            if layer_tile:
+                self._draw_tile(layer_tile, tile_area)
+
+    def _draw_tile(self, tile, tile_area):
+        pixbuf = _load_tile(tile['filename'],
+                            tile['tile_x'],
+                            tile['tile_y'],
+                            self.zoom_factor)
+        self.image.draw_pixbuf(self.gc,
+                               pixbuf,
+                               0,
+                               0,
+                               *tile_area)
+
+    def _place_tile(self, tile_x, tile_y, tile, layer=None):
+        layer = layer or self.current_layer
+        tiles = self.tiles[self.LAYERS[layer]]
         tile_area = (tile_x * self.tile_width, tile_y * self.tile_height,
                      self.tile_width, self.tile_height)
 
         self.record(tile_x, tile_y)
 
         if tile:
-            pixbuf = _load_tile(tile['filename'],
-                                tile['tile_x'],
-                                tile['tile_y'],
-                                self.zoom_factor)
-            self.image.draw_pixbuf(self.gc,
-                                   pixbuf,
-                                   0,
-                                   0,
-                                   *tile_area)
+            if tiles[tile_y][tile_x]:
+                # Due to transparency, if the sprite on this layer changes,
+                # we'll need to redraw what's below it.
+                tiles[tile_y][tile_x] = None
+                self._redraw_tiles(tile_x, tile_y)
+
+            self._draw_tile(tile, tile_area)
 
             tiles[tile_y][tile_x] = tile
         else:
@@ -305,20 +327,7 @@ class LevelGrid(gtk.DrawingArea):
             tiles[tile_y][tile_x] = None
 
             if not self.show_active_layer_only:
-                for layer_name in reversed(self.LAYERS):
-                    layer_tile = self.tiles[layer_name][tile_y][tile_x]
-
-                    if layer_tile:
-                        pixbuf = _load_tile(layer_tile['filename'],
-                                            layer_tile['tile_x'],
-                                            layer_tile['tile_y'],
-                                            self.zoom_factor)
-                        self.image.draw_pixbuf(self.gc,
-                                               pixbuf,
-                                               0,
-                                               0,
-                                               *tile_area)
-                        break
+                self._redraw_tiles(tile_x, tile_y)
 
         self.queue_draw_area(*tile_area)
 
