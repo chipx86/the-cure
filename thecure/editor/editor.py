@@ -205,17 +205,21 @@ class LevelGrid(gtk.DrawingArea):
                 self.window.draw_rectangle(self.cursor_gc, False,
                                            *self.cursor_area)
 
-    def _place_tile(self, e):
+    def _place_tile_from_event(self, e):
         tile_area = self._get_tile_area(e)
 
         if not self._is_tile_area_valid(self.cursor_area):
             return
 
-        tile_x = tile_area[0] / Tile.WIDTH
-        tile_y = tile_area[1] / Tile.HEIGHT
+        self._place_tile(tile_area[0] / Tile.WIDTH,
+                         tile_area[1] / Tile.HEIGHT)
+
+    def _place_tile(self, tile_x, tile_y):
         selected_tile = self.tile_list.selected_tile
 
         tiles = self.tiles[self.LAYERS[self.current_layer]]
+        tile_area = (tile_x * Tile.WIDTH, tile_y * Tile.HEIGHT,
+                     Tile.WIDTH, Tile.HEIGHT)
 
         if selected_tile:
             pixbuf = selected_tile['pixbuf']
@@ -236,16 +240,58 @@ class LevelGrid(gtk.DrawingArea):
 
         self.queue_draw_area(*tile_area)
 
+    def _fill(self, e):
+        def can_place_at(x, y):
+            return (0 <= x < self.width and
+                    0 <= y < self.height and
+                    tiles[y][x] == start_tile)
+
+        area = self._get_tile_area(e)
+
+        if not self._is_tile_area_valid(area):
+            return
+
+        x = area[0] / Tile.WIDTH
+        y = area[1] / Tile.HEIGHT
+
+        tiles = self.tiles[self.LAYERS[self.current_layer]]
+        start_tile = tiles[y][x]
+
+        queue = [(x, y)]
+
+        for x, y in queue:
+            if can_place_at(x, y):
+                west = x
+                east = x
+
+                while can_place_at(west - 1, y):
+                    west -= 1
+
+                while can_place_at(east + 1, y):
+                    east += 1
+
+                for c in range(west, east + 1):
+                    self._place_tile(c, y)
+
+                    for dy in (-1, 1):
+                        new_y = y + dy
+
+                        if can_place_at(c, new_y):
+                            queue.append((c, new_y))
+
     def _on_button_press(self, w, e):
-        self._place_tile(e)
-        self.drawing = True
+        if e.state & gtk.gdk.SHIFT_MASK:
+            self._fill(e)
+        else:
+            self._place_tile_from_event(e)
+            self.drawing = True
 
     def _on_button_release(self, w, e):
         self.drawing = False
 
     def _on_motion_notify(self, w, e):
         if self.drawing:
-            self._place_tile(e)
+            self._place_tile_from_event(e)
             return
 
         old_cursor_area = self.cursor_area
