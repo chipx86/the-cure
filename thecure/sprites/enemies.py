@@ -1,7 +1,7 @@
 from pygame.locals import *
 
 from thecure import get_engine
-from thecure.sprites.base import WalkingSprite
+from thecure.sprites.base import Direction, WalkingSprite
 
 
 class Enemy(WalkingSprite):
@@ -10,6 +10,7 @@ class Enemy(WalkingSprite):
 
 class InfectedHuman(Enemy):
     MOVE_SPEED = 2
+    APPROACH_DISTANCE = 400
 
     def tick(self):
         super(InfectedHuman, self).tick()
@@ -18,26 +19,43 @@ class InfectedHuman(Enemy):
             # Figure out how close we are to the player.
             player = get_engine().player
 
-            if player.rect.x > self.rect.x:
-                x = 1
-            elif player.rect.x < self.rect.x:
-                x = -1
-            else:
-                x = 0
+            distance_x = abs(player.rect.x - self.rect.x)
+            distance_y = abs(player.rect.y - self.rect.y)
 
-            if player.rect.y > self.rect.y:
-                y = 1
-            elif player.rect.y < self.rect.y:
-                y = -1
-            else:
-                y = 0
+            if (self.frame_state == 'walking' or
+                (distance_x <= self.APPROACH_DISTANCE and
+                 distance_y <= self.APPROACH_DISTANCE)):
+                x_dir = None
+                y_dir = None
 
-            self.velocity = (x * self.MOVE_SPEED, y * self.MOVE_SPEED)
+                if player.rect.x > self.rect.x:
+                    x = 1
+                    x_dir = Direction.RIGHT
+                elif player.rect.x < self.rect.x:
+                    x = -1
+                    x_dir = Direction.LEFT
+                else:
+                    x = 0
 
-            if self.velocity != (0, 0):
-                self.frame_state = 'walking'
-                self.anim_timer.start()
-                self.recompute_direction()
-            else:
-                self.frame_state = 'default'
-                self.anim_timer.stop()
+                if player.rect.y > self.rect.y:
+                    y = 1
+                    y_dir = Direction.DOWN
+                elif player.rect.y < self.rect.y:
+                    y = -1
+                    y_dir = Direction.UP
+                else:
+                    y = 0
+
+                self.velocity = (x * self.MOVE_SPEED, y * self.MOVE_SPEED)
+
+                if self.velocity != (0, 0):
+                    self.frame_state = 'walking'
+                    self.anim_timer.start()
+
+                    if distance_x > distance_y:
+                        self.set_direction(x_dir)
+                    elif distance_y > distance_x:
+                        self.set_direction(y_dir)
+                else:
+                    self.frame_state = 'default'
+                    self.anim_timer.stop()
