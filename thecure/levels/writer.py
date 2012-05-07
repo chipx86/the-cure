@@ -10,7 +10,7 @@ class LevelWriter(object):
     def __init__(self, name):
         self.name = name
 
-    def write(self, layers):
+    def write(self, layers, width, height):
         files_list = []
         files_map = {}
         layer_list = []
@@ -21,10 +21,9 @@ class LevelWriter(object):
             'files': files_list,
             'layers': layer_list,
             'tiles': tile_list,
+            'width': width,
+            'height': height,
         }
-
-        max_width = 0
-        max_height = 0
 
         for i, layer in enumerate(layers):
             layer_tiles = []
@@ -38,7 +37,6 @@ class LevelWriter(object):
             layer_list.append(layer_data)
 
             rows = layer['tiles']
-            max_height = max(max_height, len(rows))
 
             for row, row_data in enumerate(rows):
                 row_tiles = []
@@ -46,7 +44,6 @@ class LevelWriter(object):
                 col = 0
 
                 num_cols = len(row_data)
-                max_width = max(max_width, num_cols)
 
                 while col < num_cols:
                     tile_data = row_data[col]
@@ -89,9 +86,6 @@ class LevelWriter(object):
 
                 if row_tiles:
                     layer_tiles.append([row, row_tiles])
-
-        data['width'] = max_width
-        data['height'] = max_height
 
         fp = open(get_level_filename(self.name), 'w')
         fp.write(dumps(data))

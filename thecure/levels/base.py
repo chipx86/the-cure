@@ -9,7 +9,7 @@ from thecure.sprites import Tile
 class Level(object):
     name = None
     start_pos = (0, 0)
-    size = (1600, 1600)
+    size = (0, 0)
 
     def __init__(self, engine):
         self.engine = engine
@@ -25,6 +25,8 @@ class Level(object):
         assert self.name
 
         loader = LevelLoader(self.name)
+        self.size = (loader.get_width() * Tile.WIDTH,
+                     loader.get_height() * Tile.HEIGHT)
 
         for layer_data in loader.iter_layers():
             layer_name = layer_data['name']

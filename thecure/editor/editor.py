@@ -65,6 +65,8 @@ class LevelGrid(gtk.DrawingArea):
         self.drawing = False
         self.tiles = {}
         self.show_active_layer_only = False
+        self.width = 0
+        self.height = 0
 
         self.connect('expose-event', self._on_expose_event)
         self.connect('button-press-event', self._on_button_press)
@@ -80,11 +82,13 @@ class LevelGrid(gtk.DrawingArea):
         self.bg_gc = self.style.bg_gc[gtk.STATE_NORMAL]
         self.cursor_gc = self.style.bg_gc[gtk.STATE_SELECTED]
         self.current_layer = len(self.LAYERS) - 1
+        self.width = loader.get_width()
+        self.height = loader.get_height()
 
         for layer_name in self.LAYERS:
             self.tiles[layer_name] = [
-                [None] * loader.get_width()
-                for i in range(loader.get_height())
+                [None] * self.width
+                for i in range(self.height)
             ]
 
             for tile_data in self.loader.iter_tiles(layer_name):
@@ -98,27 +102,62 @@ class LevelGrid(gtk.DrawingArea):
                 }
 
         self._reload_layers()
-        self.set_size_request(loader.get_width() * Tile.WIDTH,
-                              loader.get_height() * Tile.HEIGHT)
+        self._recompute_size()
         self.loaded = True
 
     def write(self, writer):
-        writer.write([
-            {
-                'name': layer_name,
-                'is_main': layer_name == 'main',
-                'tiles': self.tiles[layer_name]
-            }
-            for layer_name in self.LAYERS
-        ])
+        writer.write(
+            [
+                {
+                    'name': layer_name,
+                    'is_main': layer_name == 'main',
+                    'tiles': self.tiles[layer_name]
+                }
+                for layer_name in self.LAYERS
+            ],
+            self.width,
+            self.height)
+
+    def _recompute_size(self):
+        self.set_size_request(self.width * Tile.WIDTH,
+                              self.height * Tile.HEIGHT)
+        self._reload_layers()
+
+    def set_width(self, width):
+        if width == self.width:
+            return
+
+        for layer_name, rows in self.tiles.iteritems():
+            for cols in rows:
+                if self.width > width:
+                    del cols[width:]
+                elif self.width < width:
+                    cols.extend([None] * (width - self.width))
+
+        self.width = width
+        self._recompute_size()
+
+    def set_height(self, height):
+        if height == self.height:
+            return
+
+        for layer_name, rows in self.tiles.iteritems():
+            if self.height > height:
+                del rows[height:]
+            elif self.height < height:
+                for i in range(self.height, height):
+                    rows.append([None] * self.width)
+
+        self.height = height
+        self._recompute_size()
 
     def set_show_active_layer_only(self, show_only):
         self.show_active_layer_only = show_only
         self._reload_layers()
 
     def _clear(self):
-        width = self.loader.get_width() * Tile.WIDTH
-        height = self.loader.get_height() * Tile.HEIGHT
+        width = self.width * Tile.WIDTH
+        height = self.height * Tile.HEIGHT
 
         self.image = gtk.gdk.Pixmap(self.window, width, height)
         self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
@@ -168,6 +207,10 @@ class LevelGrid(gtk.DrawingArea):
 
     def _place_tile(self, e):
         tile_area = self._get_tile_area(e)
+
+        if not self._is_tile_area_valid(self.cursor_area):
+            return
+
         tile_x = tile_area[0] / Tile.WIDTH
         tile_y = tile_area[1] / Tile.HEIGHT
         selected_tile = self.tile_list.selected_tile
@@ -208,6 +251,9 @@ class LevelGrid(gtk.DrawingArea):
         old_cursor_area = self.cursor_area
         self.cursor_area = self._get_tile_area(e)
 
+        if not self._is_tile_area_valid(self.cursor_area):
+            self.cursor_area = None
+
         if self.cursor_area != old_cursor_area:
             if old_cursor_area:
                 self.queue_draw_area(old_cursor_area[0],
@@ -215,10 +261,16 @@ class LevelGrid(gtk.DrawingArea):
                                      old_cursor_area[2] + 1,
                                      old_cursor_area[3] + 1)
 
-            self.queue_draw_area(self.cursor_area[0],
-                                 self.cursor_area[1],
-                                 self.cursor_area[2] + 1,
-                                 self.cursor_area[3] + 1)
+            if self.cursor_area:
+                self.queue_draw_area(self.cursor_area[0],
+                                     self.cursor_area[1],
+                                     self.cursor_area[2] + 1,
+                                     self.cursor_area[3] + 1)
+
+    def _is_tile_area_valid(self, area):
+        return (area is not None and
+                0 <= area[0] < self.width * Tile.WIDTH and
+                0 <= area[1] < self.height * Tile.HEIGHT)
 
     def _get_tile_area(self, e):
         return (int(e.x / Tile.WIDTH) * Tile.WIDTH,
@@ -368,6 +420,31 @@ class LevelEditor(gtk.Window):
 
         self.level_combo.connect('changed', lambda w: self.load_level())
 
+        # Level Size
+        hbox = gtk.HBox(False, 6)
+        hbox.show()
+        self.sidebar.pack_start(hbox, False, False, 0)
+
+        label = gtk.Label("Size:")
+        label.show()
+        hbox.pack_start(label, False, False, 0)
+
+        self.width_entry = gtk.Entry()
+        self.width_entry.show()
+        hbox.pack_start(self.width_entry, False, False, 0)
+        self.width_entry.set_width_chars(4)
+        self.width_entry.connect('focus-out-event', self._on_width_focus_out)
+
+        label = gtk.Label("x")
+        label.show()
+        hbox.pack_start(label, False, False, 0)
+
+        self.height_entry = gtk.Entry()
+        self.height_entry.show()
+        hbox.pack_start(self.height_entry, False, False, 0)
+        self.height_entry.set_width_chars(4)
+        self.height_entry.connect('focus-out-event', self._on_height_focus_out)
+
         # Layer selector
         self.layer_combo = gtk.combo_box_new_text()
         self.layer_combo.show()
@@ -432,8 +509,9 @@ class LevelEditor(gtk.Window):
 
     def load_level(self):
         loader = LevelLoader(self.level_combo.get_active_text())
-
         self.level_grid.load(loader)
+        self.width_entry.set_text(str(self.level_grid.width))
+        self.height_entry.set_text(str(self.level_grid.height))
 
     def save(self):
         writer = LevelWriter(self.level_combo.get_active_text())
@@ -451,6 +529,22 @@ class LevelEditor(gtk.Window):
 
     def _on_show_active_layer_only_toggled(self, w):
         self.level_grid.set_show_active_layer_only(w.get_active())
+
+    def _on_width_focus_out(self, w, e):
+        try:
+            width = int(self.width_entry.get_text())
+        except ValueError:
+            self.width_entry.set_text(self.level_grid.width)
+
+        self.level_grid.set_width(width)
+
+    def _on_height_focus_out(self, w, e):
+        try:
+            height = int(self.height_entry.get_text())
+        except ValueError:
+            self.height_entry.set_text(self.level_grid.height)
+
+        self.level_grid.set_height(height)
 
 
 def main():
