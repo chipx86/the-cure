@@ -59,7 +59,14 @@ def _load_tile(name, x, y, zoom_factor=1.0):
 
 class LevelGrid(gtk.DrawingArea):
     # XXX Hard-coding these is fragile.
-    LAYERS = ['bg', 'main', 'fg']
+    LAYERS = ['bg', 'bg2', 'main', 'fg']
+    LAYER_NAMES = [
+        'Background Layer',
+        'Background Detail Layer',
+        'Main Layer',
+        'Foreground Layer',
+    ]
+    DEFAULT_LAYER = LAYERS.index('main')
 
     def __init__(self, tile_list):
         super(LevelGrid, self).__init__()
@@ -594,9 +601,10 @@ class LevelEditor(gtk.Window):
         self.layer_combo = gtk.combo_box_new_text()
         self.layer_combo.show()
         self.sidebar.pack_start(self.layer_combo, False, False, 0)
-        self.layer_combo.append_text('Background Layer')
-        self.layer_combo.append_text('Main Layer')
-        self.layer_combo.append_text('Foreground Layer')
+
+        for name in LevelGrid.LAYER_NAMES:
+            self.layer_combo.append_text(name)
+
         self.layer_combo.connect('changed', lambda w: self._on_layer_changed())
 
         show_only = gtk.CheckButton('Show only this layer')
@@ -662,7 +670,7 @@ class LevelEditor(gtk.Window):
         swin.add_with_viewport(self.level_grid)
 
         self.level_combo.set_active(0)
-        self.layer_combo.set_active(1)
+        self.layer_combo.set_active(LevelGrid.DEFAULT_LAYER)
         self.spritesheet_combo.set_active(0)
 
     def load_level(self):
