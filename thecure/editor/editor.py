@@ -1,3 +1,4 @@
+import os
 import sys
 
 try:
@@ -13,7 +14,7 @@ except:
 from thecure.levels import get_levels
 from thecure.levels.loader import LevelLoader
 from thecure.levels.writer import LevelWriter
-from thecure.resources import get_image_filename
+from thecure.resources import get_image_filename, get_tilesets_path
 from thecure.sprites import Tile
 
 
@@ -303,20 +304,21 @@ class LevelGrid(gtk.DrawingArea):
             self.image.draw_rectangle(self.bg_gc, True, *tile_area)
             tiles[tile_y][tile_x] = None
 
-            for layer_name in reversed(self.LAYERS):
-                layer_tile = self.tiles[layer_name][tile_y][tile_x]
+            if not self.show_active_layer_only:
+                for layer_name in reversed(self.LAYERS):
+                    layer_tile = self.tiles[layer_name][tile_y][tile_x]
 
-                if layer_tile:
-                    pixbuf = _load_tile(layer_tile['filename'],
-                                        layer_tile['tile_x'],
-                                        layer_tile['tile_y'],
-                                        self.zoom_factor)
-                    self.image.draw_pixbuf(self.gc,
-                                           pixbuf,
-                                           0,
-                                           0,
-                                           *tile_area)
-                    break
+                    if layer_tile:
+                        pixbuf = _load_tile(layer_tile['filename'],
+                                            layer_tile['tile_x'],
+                                            layer_tile['tile_y'],
+                                            self.zoom_factor)
+                        self.image.draw_pixbuf(self.gc,
+                                               pixbuf,
+                                               0,
+                                               0,
+                                               *tile_area)
+                        break
 
         self.queue_draw_area(*tile_area)
 
@@ -430,8 +432,6 @@ class TileList(gtk.Table):
         self.zoom_factor = 0.5
         self.tile_width = int(Tile.WIDTH * self.zoom_factor)
         self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
-
-        self.set_filename('ground_1.png')
 
     def set_filename(self, filename):
         self.filename = filename
@@ -595,6 +595,18 @@ class LevelEditor(gtk.Window):
         self.sidebar.pack_start(show_only, False, False, 0)
         show_only.connect('toggled', self._on_show_active_layer_only_toggled)
 
+        # Spritesheet selector
+        self.spritesheet_combo = gtk.combo_box_new_text()
+        self.spritesheet_combo.show()
+        self.sidebar.pack_start(self.spritesheet_combo, False, False, 0)
+
+        for path in sorted(os.listdir(get_tilesets_path())):
+            self.spritesheet_combo.append_text(path)
+
+        self.spritesheet_combo.connect(
+            'changed',
+            lambda w: self.tile_list.set_filename(w.get_active_text()))
+
         # Shifts
         hbox = gtk.HBox(False, 12)
         hbox.show()
@@ -642,6 +654,7 @@ class LevelEditor(gtk.Window):
 
         self.level_combo.set_active(0)
         self.layer_combo.set_active(1)
+        self.spritesheet_combo.set_active(0)
 
     def load_level(self):
         loader = LevelLoader(self.level_combo.get_active_text())
