@@ -100,9 +100,36 @@ class Level1(Level):
         girl.move_to(512, 4672)
         girl.set_direction(Direction.RIGHT)
 
-        self.eventboxes['kids'].object_entered.connect(
-            lambda obj: self.show_monologue_once('kids',
-                'Even the kids are infected. What have I done...'))
+        self.add_monologue('back-to-lab',
+            'I wish I could just go back to the safety of my lab, but...')
+
+        self.add_monologue('kids',
+            'Even the kids are infected. What have I done...')
+
+        self.add_monologue('gone-to-hell',
+            "It's all gone to hell. All of it. This town is done for. It's "
+            "all my fault.")
+
+        self.add_monologue('looking-for-vials',
+            'The vials I ordered should be in this shipment somewhere.')
+
+        self.add_monologue('vials',
+            'Found the vials. Time to leave town.')
+
+        self.add_monologue('my-house',
+            'They set us up with a nice house. My wife spent months picking '
+            'out just the right furniture and plants. I hope she\'s safe.',
+            5000)
+
+        self.add_monologue('why-not-zombies',
+            'I\'ve always wondered why the movies never use the word "zombie."')
+
+        self.add_monologue('horde',
+            'Oh god. Now that\s a zombie horde...')
+
+    def add_monologue(self, eventbox_name, text, timeout_ms=None):
+        self.eventboxes[eventbox_name].object_entered.connect(
+            lambda obj: self.show_monologue_once(eventbox_name, text))
 
     def show_monologue_once(self, eventbox_name, text):
         self.engine.ui_manager.show_monologue(text)

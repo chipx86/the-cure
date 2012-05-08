@@ -151,7 +151,7 @@ class UIManager(object):
                         self.SCREEN_PADDING)
         return textbox
 
-    def show_monologue(self, text, **kwargs):
+    def show_monologue(self, text, timeout_ms=None, **kwargs):
         textbox = TextBox(self, text, stay_open=True, **kwargs)
         textbox.resize(self.size[0] - 2 * self.SCREEN_PADDING -
                        self.MONOLOGUE_X,
@@ -164,7 +164,7 @@ class UIManager(object):
                         self.engine.player.rect.move(offset).bottom +
                         self.MONOLOGUE_Y_OFFSET)
 
-        timer = Timer(ms=self.MONOLOGUE_TIMEOUT_MS,
+        timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
                       cb=lambda: self.close(textbox),
                       one_shot=True)
 
@@ -177,11 +177,6 @@ class UIManager(object):
         except ValueError:
             # It was already closed
             pass
-
-        if len(self.widgets) == 1:
-            assert self.widgets[0] == self.control_panel
-
-            self.ready.emit()
 
     def handle_event(self, event):
         handled = False
