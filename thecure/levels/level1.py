@@ -50,9 +50,6 @@ class Level1(Level):
         self.add_monologue('looking-for-vials',
             'The vials I ordered should be in this shipment somewhere.')
 
-        self.add_monologue('vials',
-            'Found the vials. Time to leave town.')
-
         self.add_monologue('my-house',
             'They set us up with a nice house. My wife spent months picking '
             'out just the right furniture and plants. I hope she\'s safe.',
