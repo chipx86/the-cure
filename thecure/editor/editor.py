@@ -317,6 +317,10 @@ class LevelGrid(gtk.DrawingArea):
                                            *self.cursor_area)
 
             if self.current_layer >= LAYERS.index('events'):
+                font_desc = pango.FontDescription()
+                font_desc.set_size(int(pango.SCALE *
+                                       min(24 * self.zoom_level, 12)))
+
                 for eventbox in self.eventboxes:
                     rect = eventbox['rect']
 
@@ -331,6 +335,8 @@ class LevelGrid(gtk.DrawingArea):
                     layout.set_width(pixels_rect.width * pango.SCALE)
                     layout.set_ellipsize(pango.ELLIPSIZE_END)
                     layout.set_alignment(pango.ALIGN_CENTER)
+
+                    layout.set_font_description(font_desc)
 
                     size = layout.get_pixel_size()
                     self.window.draw_layout(
