@@ -7,9 +7,7 @@ from thecure.sprites import Direction, InfectedHuman, Sprite
 
 class Level2(Level):
     name = 'level2'
-    start_pos = (960, 140)
-    #start_pos = (280, 400)
-    #start_pos = (2144, 2456)
+    start_pos = (2144, 2456)
 
     infected_humans = [
         ('girl1', (192, 2048), Direction.DOWN),
