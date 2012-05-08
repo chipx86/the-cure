@@ -417,9 +417,15 @@ class LevelGrid(gtk.DrawingArea):
 
     def _fill(self, e):
         def can_place_at(x, y):
-            return (0 <= x < self.width and
-                    0 <= y < self.height and
-                    tiles[y][x] == start_tile)
+            if (x < 0 or x >= self.width or
+                y < 0 or y >= self.height):
+                return False
+
+            for layer in range(max_layer, self.current_layer, -1):
+                if self.tiles[LAYERS[layer]][y][x]:
+                    return False
+
+            return self.tiles[LAYERS[self.current_layer]][y][x] == start_tile
 
         area = self._get_tile_area(e)
 
@@ -429,9 +435,13 @@ class LevelGrid(gtk.DrawingArea):
         x = area[0] / self.tile_width
         y = area[1] / self.tile_height
 
-        tiles = self.tiles[LAYERS[self.current_layer]]
+        if self.show_all_layers:
+            max_layer = len(LAYERS) - 1
+        else:
+            max_layer = self.current_layer
+
         tile = self.tile_list.selected_tile
-        start_tile = tiles[y][x]
+        start_tile = self.tiles[LAYERS[self.current_layer]][y][x]
 
         self.begin_record()
 
