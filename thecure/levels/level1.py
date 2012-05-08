@@ -126,12 +126,3 @@ class Level1(Level):
 
         self.add_monologue('horde',
             'Oh god. Now that\s a zombie horde...')
-
-    def add_monologue(self, eventbox_name, text, timeout_ms=None):
-        self.eventboxes[eventbox_name].object_entered.connect(
-            lambda obj: self.show_monologue_once(eventbox_name, text))
-
-    def show_monologue_once(self, eventbox_name, text):
-        self.engine.ui_manager.show_monologue(text)
-        self.eventboxes[eventbox_name].disconnect()
-        del self.eventboxes[eventbox_name]

@@ -114,6 +114,15 @@ class Level(object):
     def unregister_for_events(self, obj):
         self.event_handlers.remove(obj)
 
+    def add_monologue(self, eventbox_name, text, timeout_ms=None):
+        self.eventboxes[eventbox_name].object_entered.connect(
+            lambda obj: self.show_monologue_once(eventbox_name, text))
+
+    def show_monologue_once(self, eventbox_name, text):
+        self.engine.ui_manager.show_monologue(text)
+        self.eventboxes[eventbox_name].disconnect()
+        del self.eventboxes[eventbox_name]
+
     def on_tick(self):
         self.group.update()
 
