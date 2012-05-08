@@ -15,6 +15,7 @@ class Level(object):
     def __init__(self, engine):
         self.engine = engine
         self.layers = []
+        self.layer_map = {}
         self.event_handlers = []
         self.eventboxes = {}
         self.group = pygame.sprite.LayeredDirty()
@@ -36,6 +37,7 @@ class Level(object):
 
             layer = Layer(layer_name, layer_data['index'], self)
             self.layers.append(layer)
+            self.layer_map[layer_name] = layer
 
             if layer_data['is_main']:
                 self.main_layer = layer
@@ -116,12 +118,13 @@ class Level(object):
 
     def add_monologue(self, eventbox_name, text, timeout_ms=None):
         self.eventboxes[eventbox_name].object_entered.connect(
-            lambda obj: self.show_monologue_once(eventbox_name, text))
+            lambda obj: self._show_monologue_once(obj, eventbox_name, text))
 
-    def show_monologue_once(self, eventbox_name, text):
-        self.engine.ui_manager.show_monologue(text)
-        self.eventboxes[eventbox_name].disconnect()
-        del self.eventboxes[eventbox_name]
+    def _show_monologue_once(self, obj, eventbox_name, text):
+        if obj == self.engine.player:
+            self.engine.ui_manager.show_monologue(text)
+            self.eventboxes[eventbox_name].disconnect()
+            del self.eventboxes[eventbox_name]
 
     def on_tick(self):
         self.group.update()
