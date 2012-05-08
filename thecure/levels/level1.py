@@ -14,6 +14,8 @@ class Level1(Level):
 
         self.eventboxes['vials'].object_entered.connect(
             self._on_vials_entered)
+        self.eventboxes['exit-level'].object_entered.connect(
+            self._on_exit_entered)
 
         boy = InfectedHuman('boy1')
         self.main_layer.add(boy)
