@@ -9,103 +9,33 @@ class Level1(Level):
     name = 'level1'
     start_pos = (900, 6200)
 
+    infected_humans = [
+        ('boy1', (1536, 5696), Direction.DOWN),
+        ('girl1', (1536, 5824), Direction.UP),
+        ('girl1', (1280, 4800), Direction.DOWN),
+        ('boy1', (1216, 4608), Direction.RIGHT),
+        ('boy1', (1152, 3904), Direction.LEFT),
+        ('girl1', (1216, 3136), Direction.DOWN),
+        ('girl1', (512, 2240), Direction.DOWN),
+        ('boy1', (1408, 2048), Direction.DOWN),
+        ('girl1', (1280, 1152), Direction.LEFT),
+        ('girl1', (384, 384), Direction.RIGHT),
+        ('boy1', (448, 576), Direction.UP),
+        ('girl1', (960, 128), Direction.LEFT),
+        ('girl1', (832, 128), Direction.DOWN),
+        ('boy1', (896, 192), Direction.DOWN),
+        ('boy1', (1600, 576), Direction.DOWN),
+        ('girl1', (320, 1344), Direction.DOWN),
+        ('girl1', (1152, 2624), Direction.DOWN),
+        ('girl1', (512, 4672), Direction.RIGHT),
+    ]
+
     def setup(self):
         self.has_vials = False
 
-        self.eventboxes['vials'].object_entered.connect(
-            self._on_vials_entered)
+        self.eventboxes['vials'].object_entered.connect(self._on_vials_entered)
         self.eventboxes['exit-level'].object_entered.connect(
             self._on_exit_entered)
-
-        boy = InfectedHuman('boy1')
-        self.main_layer.add(boy)
-        boy.move_to(1536, 5696)
-        boy.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1536, 5824)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1280, 4800)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1216, 4608)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1152, 3904)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1216, 3136)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(512, 2240)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1408, 2048)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1280, 1152)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(384, 384)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(448, 576)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(960, 128)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(832, 128)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(896, 192)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1600, 576)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(320, 1344)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1152, 2624)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(512, 4672)
-        girl.set_direction(Direction.RIGHT)
 
         self.add_monologue('back-to-lab',
             'I wish I could just go back to the safety of my lab, but...')
@@ -134,20 +64,24 @@ class Level1(Level):
         self.add_monologue('horde',
             'Oh god. Now that\s a zombie horde...')
 
+        for sprite_name, pos, direction in self.infected_humans:
+            human = InfectedHuman(sprite_name)
+            self.main_layer.add(human)
+            human.move_to(*pos)
+            human.set_direction(direction)
+
     def _on_vials_entered(self, obj):
-        if obj == self.engine.player:
-            self.engine.ui_manager.show_monologue(
-                'Found the vials. Time to leave town.')
-            self.has_vials = True
-            self.eventboxes['vials'].disconnect()
-            del self.eventboxes['vials']
+        self.engine.ui_manager.show_monologue(
+            'Found the vials. Time to leave town.')
+        self.has_vials = True
+        self.eventboxes['vials'].disconnect()
+        del self.eventboxes['vials']
 
     def _on_exit_entered(self, obj):
-        if obj == self.engine.player:
-            if not self.has_vials:
-                self.engine.ui_manager.show_monologue(
-                    "I can't leave until I find my shipment of vials.")
-                obj.set_direction(Direction.DOWN)
-                obj.velocity = (0, 0)
-                obj.move_by(0, 4)
-                obj.set_running(False)
+        if not self.has_vials:
+            self.engine.ui_manager.show_monologue(
+                "I can't leave until I find my shipment of vials.")
+            obj.set_direction(Direction.DOWN)
+            obj.velocity = (0, 0)
+            obj.move_by(0, 4)
+            obj.set_running(False)

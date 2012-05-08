@@ -11,6 +11,19 @@ class Level2(Level):
     #start_pos = (280, 400)
     #start_pos = (2144, 2456)
 
+    infected_humans = [
+        ('girl1', (192, 2048), Direction.DOWN),
+        ('girl1', (448, 2048), Direction.LEFT),
+        ('girl1', (2880, 2240), Direction.LEFT),
+        ('girl1', (2688, 2304), Direction.UP),
+        ('girl1', (2880, 1408), Direction.UP),
+        ('girl1', (2880, 256), Direction.DOWN),
+        ('girl1', (832, 1216), Direction.UP),
+        ('girl1', (320, 768), Direction.RIGHT),
+        ('girl1', (1280, 1216), Direction.UP),
+        ('girl1', (320, 64), Direction.DOWN),
+    ]
+
     def setup(self):
         self.got_mushroom = False
 
@@ -21,58 +34,7 @@ class Level2(Level):
         self.eventboxes['mushroom'].object_entered.connect(
             self._on_mushroom_entered)
 
-        self.eventboxes['exit'].object_entered.connect(
-            self._on_exit_entered)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(192, 2048)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(448, 2048)
-        girl.set_direction(Direction.LEFT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(2880, 2240)
-        girl.set_direction(Direction.LEFT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(2688, 2304)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(2880, 1408)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(2880, 256)
-        girl.set_direction(Direction.DOWN)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(832, 1216)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(320, 768)
-        girl.set_direction(Direction.RIGHT)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(1280, 1216)
-        girl.set_direction(Direction.UP)
-
-        girl = InfectedHuman('girl1')
-        self.main_layer.add(girl)
-        girl.move_to(320, 64)
-        girl.set_direction(Direction.DOWN)
+        self.eventboxes['exit'].object_entered.connect(self._on_exit_entered)
 
         self.add_monologue('find-mushroom',
                            'This forest has a special kind of mushroom '
@@ -93,22 +55,26 @@ class Level2(Level):
         self.add_monologue('see-mushroom',
                            "Oh! I see the mushroom!")
 
-    def _on_mushroom_entered(self, obj):
-        if obj == self.engine.player:
-            self.got_mushroom = True
-            self.mushroom.remove()
-            self.engine.ui_manager.show_monologue(
-                'Got the mushroom. I should be able to finish this cure now.')
+        for sprite_name, pos, direction in self.infected_humans:
+            human = InfectedHuman(sprite_name)
+            self.main_layer.add(human)
+            human.move_to(*pos)
+            human.set_direction(direction)
 
-            self.eventboxes['mushroom'].disconnect()
-            del self.eventboxes['mushroom']
+    def _on_mushroom_entered(self, obj):
+        self.got_mushroom = True
+        self.mushroom.remove()
+        self.engine.ui_manager.show_monologue(
+            'Got the mushroom. I should be able to finish this cure now.')
+
+        self.eventboxes['mushroom'].disconnect()
+        del self.eventboxes['mushroom']
 
     def _on_exit_entered(self, obj):
-        if obj == self.engine.player:
-            if not self.got_mushroom:
-                self.engine.ui_manager.show_monologue(
-                    'I still need to find that mushroom.')
-                obj.set_direction(Direction.DOWN)
-                obj.velocity = (0, 0)
-                obj.move_by(0, 4)
-                obj.set_running(False)
+        if not self.got_mushroom:
+            self.engine.ui_manager.show_monologue(
+                'I still need to find that mushroom.')
+            obj.set_direction(Direction.DOWN)
+            obj.velocity = (0, 0)
+            obj.move_by(0, 4)
+            obj.set_running(False)
