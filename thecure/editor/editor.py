@@ -95,6 +95,7 @@ class LevelGrid(gtk.DrawingArea):
         self.drawing = False
         self.tiles = {}
         self.show_active_layer_only = False
+        self.show_all_layers = False
         self.width = 0
         self.height = 0
         self.undo_list = []
@@ -216,6 +217,10 @@ class LevelGrid(gtk.DrawingArea):
         self.show_active_layer_only = show_only
         self._reload_layers()
 
+    def set_show_all_layers(self, show_all):
+        self.show_all_layers = show_all
+        self._reload_layers()
+
     def begin_record(self):
         if self.undo_record_count == 0:
             self.recorded_undos = []
@@ -294,7 +299,12 @@ class LevelGrid(gtk.DrawingArea):
     def _reload_layers(self):
         self._clear()
 
-        for i in range(self.current_layer + 1):
+        if self.show_all_layers:
+            max_layer = len(LAYERS)
+        else:
+            max_layer = self.current_layer + 1
+
+        for i in range(max_layer):
             if not self.show_active_layer_only or self.current_layer == i:
                 self._load_layer(LAYERS[i])
 
@@ -865,10 +875,16 @@ class LevelEditor(gtk.Window):
 
         self.layer_combo.connect('changed', lambda w: self._on_layer_changed())
 
-        show_only = gtk.CheckButton('Show only this layer')
-        show_only.show()
-        self.sidebar.pack_start(show_only, False, False, 0)
-        show_only.connect('toggled', self._on_show_active_layer_only_toggled)
+        self.show_only = gtk.CheckButton('Show only this layer')
+        self.show_only.show()
+        self.sidebar.pack_start(self.show_only, False, False, 0)
+        self.show_only.connect('toggled',
+                               self._on_show_active_layer_only_toggled)
+
+        self.show_all = gtk.CheckButton('Always show all layers')
+        self.show_all.show()
+        self.sidebar.pack_start(self.show_all, False, False, 0)
+        self.show_all.connect('toggled', self._on_show_all_layers_toggled)
 
         # Sprite pane
         self.sprite_pane = SpritePane(self)
@@ -959,7 +975,12 @@ class LevelEditor(gtk.Window):
             self.sprite_pane.set_active()
 
     def _on_show_active_layer_only_toggled(self, w):
+        self.show_all.set_active(False)
         self.level_grid.set_show_active_layer_only(w.get_active())
+
+    def _on_show_all_layers_toggled(self, w):
+        self.show_only.set_active(False)
+        self.level_grid.set_show_all_layers(w.get_active())
 
     def _on_width_focus_out(self, w, e):
         try:
