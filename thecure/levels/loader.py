@@ -11,34 +11,36 @@ from thecure.resources import get_level_filename
 class LevelLoader(object):
     def __init__(self, name):
         self.name = name
+        self.data = None
 
         self._load_file(get_level_filename(name))
 
     def get_width(self):
-        assert self.data
-        assert 'width' in self.data
-        return self.data['width']
+        assert self.data is not None
+        return self.data.get('width', 1)
 
     def get_height(self):
-        assert self.data
-        assert 'height' in self.data
-        return self.data['height']
+        assert self.data is not None
+        return self.data.get('height', 1)
 
     def iter_layers(self):
-        assert self.data
-        assert 'layers' in self.data
+        assert self.data is not None
 
-        for layer_data in self.data['layers']:
+        for layer_data in self.data.get('layers', []):
             yield layer_data
 
     def iter_eventboxes(self):
-        assert self.data
+        assert self.data is not None
 
         for name, eventbox in self.data.get('eventboxes', {}).iteritems():
             yield name, eventbox
 
     def iter_tiles(self, layer_name):
-        assert self.data
+        assert self.data is not None
+
+        if 'tiles' not in self.data:
+            return
+
         assert 'files' in self.data
         assert 'layers' in self.data
         assert 'tiles' in self.data
