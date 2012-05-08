@@ -105,9 +105,7 @@ class Level2(Level):
 
     def _on_exit_entered(self, obj):
         if obj == self.engine.player:
-            if self.got_mushroom:
-                pass
-            else:
+            if not self.got_mushroom:
                 self.engine.ui_manager.show_monologue(
                     'I still need to find that mushroom.')
                 obj.set_direction(Direction.DOWN)

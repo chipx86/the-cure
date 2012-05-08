@@ -10,6 +10,11 @@ class Level1(Level):
     start_pos = (900, 6200)
 
     def setup(self):
+        self.has_vials = False
+
+        self.eventboxes['vials'].object_entered.connect(
+            self._on_vials_entered)
+
         boy = InfectedHuman('boy1')
         self.main_layer.add(boy)
         boy.move_to(1536, 5696)
@@ -126,3 +131,21 @@ class Level1(Level):
 
         self.add_monologue('horde',
             'Oh god. Now that\s a zombie horde...')
+
+    def _on_vials_entered(self, obj):
+        if obj == self.engine.player:
+            self.engine.ui_manager.show_monologue(
+                'Found the vials. Time to leave town.')
+            self.has_vials = True
+            self.eventboxes['vials'].disconnect()
+            del self.eventboxes['vials']
+
+    def _on_exit_entered(self, obj):
+        if obj == self.engine.player:
+            if not self.has_vials:
+                self.engine.ui_manager.show_monologue(
+                    "I can't leave until I find my shipment of vials.")
+                obj.set_direction(Direction.DOWN)
+                obj.velocity = (0, 0)
+                obj.move_by(0, 4)
+                obj.set_running(False)
