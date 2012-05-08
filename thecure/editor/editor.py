@@ -38,31 +38,31 @@ _tilesheet_cache = {}
 _tile_cache = {}
 
 
-def _load_tilesheet(name, zoom_factor=1.0):
-    key = '%s-%s' % (name, zoom_factor)
+def _load_tilesheet(name, zoom_level=1.0):
+    key = '%s-%s' % (name, zoom_level)
 
     if key not in _tilesheet_cache:
         pixbuf = gtk.gdk.pixbuf_new_from_file(
             get_image_filename('sprites/tiles/' + name))
 
-        if zoom_factor != 1.0:
-            pixbuf = pixbuf.scale_simple(int(pixbuf.get_width() * zoom_factor),
-                                         int(pixbuf.get_height() * zoom_factor),
-                                         gtk.gdk.INTERP_NEAREST)
+        if zoom_level != 1.0:
+            pixbuf = pixbuf.scale_simple(int(pixbuf.get_width() * zoom_level),
+                                         int(pixbuf.get_height() * zoom_level),
+                                         gtk.gdk.INTERP_HYPER)
 
         _tilesheet_cache[key] = pixbuf
 
     return _tilesheet_cache[key]
 
 
-def _load_tile(name, x, y, zoom_factor=1.0):
-    key = '%s-%s-%s-%s' % (name, x, y, zoom_factor)
+def _load_tile(name, x, y, zoom_level=1.0):
+    key = '%s-%s-%s-%s' % (name, x, y, zoom_level)
 
     if key not in _tile_cache:
-        pixbuf = _load_tilesheet(name, zoom_factor)
+        pixbuf = _load_tilesheet(name, zoom_level)
 
-        width = int(Tile.WIDTH * zoom_factor)
-        height = int(Tile.HEIGHT * zoom_factor)
+        width = int(Tile.WIDTH * zoom_level)
+        height = int(Tile.HEIGHT * zoom_level)
 
         _tile_cache[key] = pixbuf.subpixbuf(int(x * width),
                                             int(y * height),
@@ -104,9 +104,9 @@ class LevelGrid(gtk.DrawingArea):
         self.action = None
         self.eventboxes = []
 
-        self.zoom_factor = 0.5
-        self.tile_width = int(Tile.WIDTH * self.zoom_factor)
-        self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
+        self.zoom_level = 0.5
+        self.tile_width = int(Tile.WIDTH * self.zoom_level)
+        self.tile_height = int(Tile.HEIGHT * self.zoom_level)
 
         self.connect('expose-event', self._on_expose_event)
         self.connect('button-press-event', self._on_button_press)
@@ -153,7 +153,6 @@ class LevelGrid(gtk.DrawingArea):
                 'rect': pygame.Rect(rect),
             })
 
-        self._reload_layers()
         self._recompute_size()
         self.loaded = True
 
@@ -170,6 +169,12 @@ class LevelGrid(gtk.DrawingArea):
             self.eventboxes,
             self.width,
             self.height)
+
+    def set_zoom_level(self, zoom_level):
+        self.zoom_level = zoom_level
+        self.tile_width = int(Tile.WIDTH * self.zoom_level)
+        self.tile_height = int(Tile.HEIGHT * self.zoom_level)
+        self._recompute_size()
 
     def _recompute_size(self):
         self.set_size_request(self.width * self.tile_width,
@@ -268,7 +273,7 @@ class LevelGrid(gtk.DrawingArea):
                     continue
 
                 tilesheet = _load_tilesheet(col_data['filename'],
-                                            self.zoom_factor)
+                                            self.zoom_level)
 
                 self.image.draw_pixbuf(self.gc,
                                        tilesheet,
@@ -359,7 +364,7 @@ class LevelGrid(gtk.DrawingArea):
         pixbuf = _load_tile(tile['filename'],
                             tile['tile_x'],
                             tile['tile_y'],
-                            self.zoom_factor)
+                            self.zoom_level)
         self.image.draw_pixbuf(self.gc,
                                pixbuf,
                                0,
@@ -511,8 +516,8 @@ class LevelGrid(gtk.DrawingArea):
         self.editor.tile_coord_label.set_text(
             '%s, %s' % (cursor_tiles_area[0], cursor_tiles_area[1]))
         self.editor.pixels_coord_label.set_text(
-            '%s, %s' % (int(self.cursor_area[0] / self.zoom_factor),
-                        int(self.cursor_area[1] / self.zoom_factor)))
+            '%s, %s' % (int(self.cursor_area[0] / self.zoom_level),
+                        int(self.cursor_area[1] / self.zoom_level)))
 
         if not self._is_tile_area_valid(self.cursor_area):
             self.cursor_area = None
@@ -577,9 +582,9 @@ class TileList(gtk.VBox):
         self.selected_tile = None
         self.shift_x = False
         self.shift_y = False
-        self.zoom_factor = 0.5
-        self.tile_width = int(Tile.WIDTH * self.zoom_factor)
-        self.tile_height = int(Tile.HEIGHT * self.zoom_factor)
+        self.zoom_level = 0.5
+        self.tile_width = int(Tile.WIDTH * self.zoom_level)
+        self.tile_height = int(Tile.HEIGHT * self.zoom_level)
 
         self.toolbox = gtk.HBox(False, 0)
         self.toolbox.show()
@@ -619,7 +624,7 @@ class TileList(gtk.VBox):
 
     def set_filename(self, filename):
         self.filename = filename
-        self.pixbuf = _load_tilesheet(filename, self.zoom_factor)
+        self.pixbuf = _load_tilesheet(filename, self.zoom_level)
         assert self.pixbuf
 
         self._reload_tiles()
@@ -648,7 +653,7 @@ class TileList(gtk.VBox):
 
                     x += 0.5
 
-                tile_pixbuf = _load_tile(self.filename, x, y, self.zoom_factor)
+                tile_pixbuf = _load_tile(self.filename, x, y, self.zoom_level)
 
                 if not tile_pixbuf:
                     continue
@@ -779,6 +784,9 @@ class EventBoxPane(gtk.VBox):
 class LevelEditor(gtk.Window):
     def __init__(self):
         super(LevelEditor, self).__init__(gtk.WINDOW_TOPLEVEL)
+
+        self.zoom_level = 0.5
+
         self.set_title('The Cure - Level Editor')
         self.set_border_width(0)
         self.set_resizable(True)
@@ -901,6 +909,13 @@ class LevelEditor(gtk.Window):
         self.level_combo.set_active(0)
         self.layer_combo.set_active(DEFAULT_LAYER)
 
+    def set_zoom_level(self, zoom_level):
+        if zoom_level < 0.125 or zoom_level > 1.0:
+            return
+
+        self.zoom_level = zoom_level
+        self.level_grid.set_zoom_level(self.zoom_level)
+
     def load_level(self):
         loader = LevelLoader(self.level_combo.get_active_text())
         self.level_grid.load(loader)
@@ -919,6 +934,10 @@ class LevelEditor(gtk.Window):
             elif e.keyval == ord('r'):
                 self.level_grid.redo()
                 return True
+        elif e.keyval == ord('-'):
+            self.set_zoom_level(self.zoom_level / 2)
+        elif e.keyval == ord('+'):
+            self.set_zoom_level(self.zoom_level * 2)
 
     def _on_layer_changed(self):
         current_layer = self.layer_combo.get_active()
