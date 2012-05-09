@@ -61,7 +61,6 @@ class LevelLoader(object):
         for row_num, tiles in rows:
             for tile_ids, start_col, colspan in tiles:
                 if isinstance(tile_ids, list):
-                    print row_num, start_col, tile_ids, colspan
                     repeat_count = colspan
                     colspan = 1
                 else:

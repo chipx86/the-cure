@@ -97,26 +97,24 @@ class LevelWriter(object):
 
                     # See if we can find a repeated pattern from the
                     # previous entry.
-                    if prev_tile and colspan == 1:
+                    if (prev_tile and colspan == 1 and
+                        not isinstance(prev_tile[0], list) and
+                        prev_tile[2] == 1 and
+                        prev_tile[1] + 1 == tile[1]):
                         repeat_span = 0
+                        start_col = col + colspan
 
-                        if (not isinstance(prev_tile[0], list) and
-                            prev_tile[2] == 1 and
-                            prev_tile[1] + 1 == tile[1]):
-                            start_col = col + colspan
-
-                            for c in xrange(start_col, len(row_data), 2):
-                                if (c + 1 < len(row_data) and
-                                    row_data[c] == prev_tile_data and
-                                    row_data[c + 1] == tile_data):
-                                    repeat_span += 1
-                                else:
-                                    break
+                        for c in xrange(start_col, len(row_data), 2):
+                            if (c + 1 < len(row_data) and
+                                row_data[c] == prev_tile_data and
+                                row_data[c + 1] == tile_data):
+                                repeat_span += 1
+                            else:
+                                break
 
                         if repeat_span > 0:
                             prev_tile[0] = [prev_tile[0], tile_id]
                             prev_tile[2] = repeat_span
-                            print row, prev_tile
                             col += 2 * (repeat_span - 1)
                             continue
 
