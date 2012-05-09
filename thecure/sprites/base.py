@@ -188,6 +188,8 @@ class Sprite(BaseSprite):
         },
     }
 
+    NEED_TICKS = True
+
     def __init__(self, name=None):
         super(Sprite, self).__init__()
 

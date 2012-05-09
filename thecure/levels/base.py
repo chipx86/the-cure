@@ -18,7 +18,6 @@ class Level(object):
         self.layer_map = {}
         self.event_handlers = []
         self.eventboxes = {}
-        self.group = pygame.sprite.LayeredDirty()
 
         self.load_level()
 
@@ -46,9 +45,9 @@ class Level(object):
                 tile = Tile(filename='tiles/' + tile_data['tile_file'],
                             tile_offset=(tile_data['tile_x'],
                                          tile_data['tile_y']))
-                layer.add(tile)
                 tile.move_to(tile_data['col'] * Tile.WIDTH,
                              tile_data['row'] * Tile.HEIGHT)
+                layer.add(tile)
 
         for name, eventbox_data in loader.iter_eventboxes():
             rect = pygame.Rect(eventbox_data['rect'])
@@ -69,32 +68,23 @@ class Level(object):
         pass
 
     def start(self):
-        for sprite in self.group:
-            sprite.start()
+        for layer in self.layers:
+            layer.start()
 
     def draw(self, screen, clip_rect):
-        self.draw_bg(screen)
-
         offset = (-clip_rect.left, -clip_rect.top)
 
         for layer in self.layers:
-            count = 0
-            for sprite in sorted(set(layer.iterate_in_rect(clip_rect)),
+            for sprite in sorted(layer.iterate_in_rect(clip_rect),
                                  key=lambda s: (s.rect.top, s.rect.left)):
-                if (sprite.visible and sprite.dirty and
-                    clip_rect.colliderect(sprite.rect)):
+                if sprite.visible and sprite.dirty:
                     screen.blit(sprite.image, sprite.rect.move(offset))
 
                     if sprite.dirty == 1:
                         sprite.dirty = 0
 
-                    count += 1
-
         if self.engine.debug_rects:
-            for sprite in self.group:
-                if sprite.layer.name != 'main':
-                    continue
-
+            for sprite in self.main_layer.iterate_in_rect(clip_rect):
                 if sprite.visible:
                     rects = sprite.get_absolute_collision_rects()
 
@@ -105,10 +95,9 @@ class Level(object):
 
             for eventbox in self.event_handlers:
                 for rect in eventbox.rects:
-                    pygame.draw.rect(screen, (255, 0, 0), rect.move(offset), 1)
-
-    def draw_bg(self, screen):
-        pass
+                    if rect.colliderect(clip_rect):
+                        pygame.draw.rect(screen, (255, 0, 0),
+                                         rect.move(offset), 1)
 
     def register_for_events(self, obj):
         self.event_handlers.append(obj)
@@ -127,7 +116,5 @@ class Level(object):
             del self.eventboxes[eventbox_name]
 
     def on_tick(self):
-        self.group.update()
-
-        for sprite in self.group:
-            sprite.tick()
+        for layer in self.layers:
+            layer.tick()

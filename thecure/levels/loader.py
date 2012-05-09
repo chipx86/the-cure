@@ -27,6 +27,9 @@ class LevelLoader(object):
         assert self.data is not None
 
         for layer_data in self.data.get('layers', []):
+            if layer_data['name'] == 'events':
+                continue
+
             yield layer_data
 
     def iter_eventboxes(self):

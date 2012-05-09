@@ -7,6 +7,8 @@ class Tile(Sprite):
     WIDTH = 64
     HEIGHT = 64
 
+    NEED_TICKS = False
+
     def __init__(self, filename, tile_offset):
         super(Tile, self).__init__()
 

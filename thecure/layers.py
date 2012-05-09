@@ -12,6 +12,7 @@ class QuadTree(object):
         self.cx = self.rect.centerx
         self.cy = self.rect.centery
         self.moved_cnxs = {}
+        self._next_stamp = 1
 
         if depth == 0:
             self.nw_tree = None
@@ -76,17 +77,24 @@ class QuadTree(object):
             cnx = self.moved_cnxs.pop(sprite)
             cnx.disconnect()
 
-    def get_sprites(self, rect=None):
+    def get_sprites(self, rect=None, stamp=None):
         """Returns any sprites stored in quadrants intersecting with rect.
 
         This does not necessarily mean that the sprites themselves intersect
         with rect.
         """
+        if stamp is None:
+            stamp = self._next_stamp
+            self._next_stamp += 1
+
         for sprite in self.sprites:
-            yield sprite
+            if (getattr(sprite, '_quadtree_stamp', None) != stamp and
+                (rect is None or rect.colliderect(sprite.rect))):
+                sprite._quadtree_stamp = stamp
+                yield sprite
 
         for tree in self._get_trees(rect):
-            for sprite in tree.get_sprites(rect):
+            for sprite in tree.get_sprites(rect, stamp):
                 yield sprite
 
     def __iter__(self):
@@ -130,6 +138,7 @@ class Layer(object):
         self.parent = parent
         self.index = index
         self.quad_tree = QuadTree(pygame.Rect(0, 0, *self.parent.size))
+        self.tick_sprites = []
 
     def __repr__(self):
         return 'Layer %s on parent %s' % (self.index, self.parent)
@@ -158,10 +167,11 @@ class Layer(object):
 
         sprite.update_image()
 
-        if sprite.visible and not force_remove:
-            self.parent.group.add(sprite, layer=self.index)
-        else:
-            self.parent.group.remove(sprite)
+        if sprite.NEED_TICKS:
+            if sprite.visible and not force_remove:
+                self.tick_sprites.append(sprite)
+            else:
+                self.tick_sprites.remove(sprite)
 
     def __iter__(self):
         return iter(self.quad_tree)
@@ -171,3 +181,11 @@ class Layer(object):
 
     def handle_event(self, event):
         pass
+
+    def tick(self):
+        for sprite in self.tick_sprites:
+            sprite.tick()
+
+    def start(self):
+        for sprite in self.quad_tree:
+            sprite.start()
