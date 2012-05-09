@@ -12,6 +12,7 @@ except:
     sys.stderr.write('PyGTK 2.0 is needed for the level editor.\n')
     sys.exit(1)
 
+import gobject
 import pango
 import pygame
 
@@ -78,6 +79,12 @@ class LevelGrid(gtk.DrawingArea):
     ADD_EVENTBOX_ACTION = 'add-eventbox'
     REMOVE_EVENTBOX_ACTION = 'remove-eventbox'
 
+    __gsignals__ = {
+        'set-scroll-adjustments': (
+            gobject.SIGNAL_RUN_LAST,
+            gobject.TYPE_NONE, (gtk.Adjustment, gtk.Adjustment)),
+    }
+
     def __init__(self, editor, tile_list):
         super(LevelGrid, self).__init__()
 
@@ -114,6 +121,8 @@ class LevelGrid(gtk.DrawingArea):
         self.connect('button-press-event', self._on_button_press)
         self.connect('button-release-event', self._on_button_release)
         self.connect('motion-notify-event', self._on_motion_notify)
+
+        self.set_set_scroll_adjustments_signal('set-scroll-adjustments')
 
     def load(self, loader):
         self.realize()
@@ -181,6 +190,15 @@ class LevelGrid(gtk.DrawingArea):
     def _recompute_size(self):
         self.set_size_request(self.width * self.tile_width,
                               self.height * self.tile_height)
+
+        print 'Recomputing'
+        self._hadjust.lower = 0
+        self._hadjust.upper = self.width
+        self._hadjust.page_size = 10
+        self._vadjust.lower = 0
+        self._vadjust.upper = self.height
+        self._vadjust.page_size = 10
+
         self._reload_layers()
 
     def set_width(self, width):
@@ -269,10 +287,13 @@ class LevelGrid(gtk.DrawingArea):
         width = self.width * self.tile_width
         height = self.height * self.tile_height
 
-        self.image = gtk.gdk.Pixmap(self.window, width, height)
-        self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
+        #self.image = gtk.gdk.Pixmap(self.window, width, height)
+        #self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
 
     def _load_layer(self, layer_name):
+        if not self.image:
+            return
+
         for row, row_data in enumerate(self.tiles[layer_name]):
             for col, col_data in enumerate(row_data):
                 if col_data is None:
@@ -589,6 +610,24 @@ class LevelGrid(gtk.DrawingArea):
 
             self.queue_draw_area(
                 *self._tiles_rect_to_pixels(self._cur_eventbox_rect))
+
+    def do_set_scroll_adjustments(self, hadjustment, vadjustment):
+        hadjustment.connect('value-changed', self._on_hadjust_changed)
+        self._hadjust = hadjustment
+        vadjustment.connect('value-changed', self._on_vadjust_changed)
+        self._vadjust = vadjustment
+
+    def _on_hadjust_changed(self, hadjust):
+        self._update_view()
+
+    def _on_vadjust_changed(self, hadjust):
+        self._update_view()
+
+    def _update_view(self):
+        widget_size = self.window.get_size()
+        print 'updating image'
+        self.image = gtk.gdk.Pixmap(self.window, *widget_size)
+        self._reload_layers()
 
     def _is_tile_area_valid(self, area):
         return (area is not None and
@@ -943,7 +982,7 @@ class LevelEditor(gtk.Window):
 
         self.level_grid = LevelGrid(self, self.sprite_pane.tile_list)
         self.level_grid.show()
-        swin.add_with_viewport(self.level_grid)
+        swin.add(self.level_grid)
 
         self.level_combo.set_active(0)
         self.layer_combo.set_active(DEFAULT_LAYER)
