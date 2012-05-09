@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 
@@ -955,7 +956,8 @@ class LevelEditor(gtk.Window):
         self.level_grid.set_zoom_level(self.zoom_level)
 
     def load_level(self):
-        loader = LevelLoader(self.level_combo.get_active_text())
+        self.level_name = self.level_combo.get_active_text()
+        loader = LevelLoader(self.level_name)
         self.level_grid.load(loader)
         self.width_entry.set_text(str(self.level_grid.width))
         self.height_entry.set_text(str(self.level_grid.height))
@@ -963,6 +965,17 @@ class LevelEditor(gtk.Window):
     def save(self):
         writer = LevelWriter(self.level_combo.get_active_text())
         self.level_grid.write(writer)
+
+    def save_screenshot(self):
+        image = self.level_grid.image
+        size = image.get_size()
+        pixbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, *size)
+        pixbuf.get_from_drawable(image, image.get_colormap(), 0, 0, 0, 0, *size)
+
+        datestr = datetime.now().strftime("%m%d%Y_%H%M%S")
+        filename = 'screenshot_%s_%s.png' % (self.level_name, datestr)
+        pixbuf.save(filename, "png")
+        print "Saved to %s" % filename
 
     def _on_key_press(self, w, e):
         if e.state & gtk.gdk.CONTROL_MASK:
@@ -976,6 +989,8 @@ class LevelEditor(gtk.Window):
             self.set_zoom_level(self.zoom_level / 2)
         elif e.keyval == ord('+'):
             self.set_zoom_level(self.zoom_level * 2)
+        elif e.keyval == gtk.keysyms.F2:
+            self.save_screenshot()
 
     def _on_layer_changed(self):
         current_layer = self.layer_combo.get_active()
