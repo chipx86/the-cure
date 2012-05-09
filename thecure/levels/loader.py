@@ -59,17 +59,29 @@ class LevelLoader(object):
         tile_types = self.data['tiles']
 
         for row_num, tiles in rows:
-            for tile_id, start_col, colspan in tiles:
-                for i in range(colspan):
-                    tile_type = tile_types[tile_id]
+            for tile_ids, start_col, colspan in tiles:
+                if isinstance(tile_ids, list):
+                    print row_num, start_col, tile_ids, colspan
+                    repeat_count = colspan
+                    colspan = 1
+                else:
+                    tile_ids = [tile_ids]
+                    repeat_count = 1
 
-                    yield {
-                        'row': row_num,
-                        'col': start_col + i,
-                        'tile_file': files[tile_type[0]],
-                        'tile_x': tile_type[1],
-                        'tile_y': tile_type[2],
-                    }
+                for i in xrange(repeat_count):
+                    for tile_id in tile_ids:
+                        for j in xrange(colspan):
+                            tile_type = tile_types[tile_id]
+
+                            yield {
+                                'row': row_num,
+                                'col': start_col + j,
+                                'tile_file': files[tile_type[0]],
+                                'tile_x': tile_type[1],
+                                'tile_y': tile_type[2],
+                            }
+
+                        start_col += colspan
 
     def _load_file(self, filename):
         try:

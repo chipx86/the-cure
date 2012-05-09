@@ -54,6 +54,9 @@ class LevelWriter(object):
 
                 num_cols = len(row_data)
 
+                prev_tile = None
+                prev_tile_data = None
+
                 while col < num_cols:
                     tile_data = row_data[col]
 
@@ -84,13 +87,42 @@ class LevelWriter(object):
                     # Figure out the colspan
                     colspan = 1
 
-                    for endcol in range(col + 1, len(row_data)):
+                    for endcol in xrange(col + 1, len(row_data)):
                         if tile_data == row_data[endcol]:
                             colspan += 1
                         else:
                             break
 
-                    row_tiles.append([tile_id, col, colspan])
+                    tile = [tile_id, col, colspan]
+
+                    # See if we can find a repeated pattern from the
+                    # previous entry.
+                    if prev_tile and colspan == 1:
+                        repeat_span = 0
+
+                        if (not isinstance(prev_tile[0], list) and
+                            prev_tile[2] == 1 and
+                            prev_tile[1] + 1 == tile[1]):
+                            start_col = col + colspan
+
+                            for c in xrange(start_col, len(row_data), 2):
+                                if (c + 1 < len(row_data) and
+                                    row_data[c] == prev_tile_data and
+                                    row_data[c + 1] == tile_data):
+                                    repeat_span += 1
+                                else:
+                                    break
+
+                        if repeat_span > 0:
+                            prev_tile[0] = [prev_tile[0], tile_id]
+                            prev_tile[2] = repeat_span
+                            print row, prev_tile
+                            col += 2 * (repeat_span - 1)
+                            continue
+
+                    row_tiles.append(tile)
+                    prev_tile = tile
+                    prev_tile_data = tile_data
                     col += colspan
 
                 if row_tiles:
