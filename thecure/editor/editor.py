@@ -470,6 +470,9 @@ class LevelGrid(gtk.DrawingArea):
         self.end_record()
 
     def _on_button_press(self, w, e):
+        if e.button != 1:
+            return
+
         if self.action == self.PLACE_TILE_ACTION:
             if e.state & gtk.gdk.SHIFT_MASK:
                 self._fill(e)
@@ -523,6 +526,9 @@ class LevelGrid(gtk.DrawingArea):
                     break
 
     def _on_button_release(self, w, e):
+        if e.button != 1:
+            return
+
         if self.drawing:
             self.drawing = False
             self.end_record()
@@ -985,11 +991,15 @@ class LevelEditor(gtk.Window):
             self.sprite_pane.set_active()
 
     def _on_show_active_layer_only_toggled(self, w):
-        self.show_all.set_active(False)
+        if w.get_active():
+            self.show_all.set_active(False)
+
         self.level_grid.set_show_active_layer_only(w.get_active())
 
     def _on_show_all_layers_toggled(self, w):
-        self.show_only.set_active(False)
+        if w.get_active():
+            self.show_only.set_active(False)
+
         self.level_grid.set_show_all_layers(w.get_active())
 
     def _on_width_focus_out(self, w, e):
