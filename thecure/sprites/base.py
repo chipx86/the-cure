@@ -223,7 +223,10 @@ class Sprite(BaseSprite):
 
     def stop(self):
         self.velocity = (0, 0)
-        self.anim_timer.stop()
+
+        if self.anim_timer:
+            self.anim_timer.stop()
+
         self.started = False
 
     def show(self):
