@@ -275,6 +275,19 @@ class LevelGrid(gtk.DrawingArea):
             redos = self.redo_list.pop()
             self.undo_list.append(self._apply_undos_redos(redos))
 
+    def get_screenshot(self):
+        size = (self.width * self.tile_width, self.height * self.tile_height)
+        image = gtk.gdk.Pixmap(self.window, *size)
+
+        for layer in LAYERS:
+            self._draw_tiles(image, self.tiles[layer], 0, self.height,
+                             0, self.width, 0, 0)
+
+        pixbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, *size)
+        pixbuf.get_from_drawable(image, image.get_colormap(), 0, 0, 0, 0, *size)
+
+        return pixbuf
+
     def _apply_undos_redos(self, items):
         revert_list = []
 
@@ -327,7 +340,7 @@ class LevelGrid(gtk.DrawingArea):
 
         for i in range(max_layer):
             if not self.show_active_layer_only or self.current_layer == i:
-                self._draw_tiles(self.tiles[LAYERS[i]], start_row,
+                self._draw_tiles(self.window, self.tiles[LAYERS[i]], start_row,
                                  end_row, start_col, end_col,
                                  evt_offset_row, evt_offset_col)
 
@@ -367,7 +380,7 @@ class LevelGrid(gtk.DrawingArea):
                     pixels_rect.y + (pixels_rect.height - size[1]) / 2,
                     layout)
 
-    def _draw_tiles(self, tiles, start_row, end_row, start_col, end_col,
+    def _draw_tiles(self, image, tiles, start_row, end_row, start_col, end_col,
                     offset_row, offset_col):
         for row, row_data in enumerate(tiles[start_row:end_row]):
             for col, col_data in enumerate(row_data[start_col:end_col]):
@@ -375,7 +388,7 @@ class LevelGrid(gtk.DrawingArea):
                     tilesheet = _load_tilesheet(col_data['filename'],
                                                 self.zoom_level)
 
-                    self.window.draw_pixbuf(self.gc, tilesheet,
+                    image.draw_pixbuf(self.gc, tilesheet,
                         int(col_data['tile_x'] * self.tile_width),
                         int(col_data['tile_y'] * self.tile_height),
                         (offset_col + col) * self.tile_width,
@@ -1000,11 +1013,7 @@ class LevelEditor(gtk.Window):
         self.level_grid.write(writer)
 
     def save_screenshot(self):
-        image = self.level_grid.image
-        size = image.get_size()
-        pixbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, *size)
-        pixbuf.get_from_drawable(image, image.get_colormap(), 0, 0, 0, 0, *size)
-
+        pixbuf = self.level_grid.get_screenshot()
         datestr = datetime.now().strftime("%m%d%Y_%H%M%S")
         filename = 'screenshot_%s_%s.png' % (self.level_name, datestr)
         pixbuf.save(filename, "png")
