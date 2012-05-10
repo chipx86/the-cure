@@ -452,6 +452,9 @@ class LevelGrid(gtk.DrawingArea):
         tile = self.tile_list.selected_tile
         start_tile = self.tiles[LAYERS[self.current_layer]][y][x]
 
+        if start_tile == tile:
+            return
+
         self.begin_record()
 
         queue = [(x, y)]
