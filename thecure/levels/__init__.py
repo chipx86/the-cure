@@ -4,5 +4,4 @@ from thecure.levels.overworld import Overworld
 
 
 def get_levels():
-    return [Cliff]
-    #return [Overworld, Cliff]
+    return [Overworld, Cliff]
