@@ -656,15 +656,15 @@ class TileList(gtk.VBox):
         self.pack_start(self.toolbox, False, False, 0)
 
         # Erase button
-        button = self._create_button()
-        self.toolbox.pack_start(button, False, False, 0)
-        self.selected_button = button
-        button.set_active(True)
-        self._group = button
+        self.erase_button = self._create_button()
+        self.toolbox.pack_start(self.erase_button, False, False, 0)
+        self.selected_button = self.erase_button
+        self.erase_button.set_active(True)
+        self._group = self.erase_button
 
         image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
         image.show()
-        button.add(image)
+        self.erase_button.add(image)
 
         # Tiles window
         swin = gtk.ScrolledWindow()
@@ -697,6 +697,8 @@ class TileList(gtk.VBox):
     def _reload_tiles(self):
         tiles_x = self.pixbuf.get_width() / self.tile_width
         tiles_y = self.pixbuf.get_height() / self.tile_height
+
+        self.erase_button.set_active(True)
 
         self.table.foreach(lambda w: w.destroy())
 
@@ -756,11 +758,9 @@ class TileList(gtk.VBox):
         return button
 
     def _on_clicked(self, w, tile_data):
-        if not w.get_active():
-            return
-
-        self.selected_button = w
-        self.selected_tile = tile_data
+        if w.get_active():
+            self.selected_button = w
+            self.selected_tile = tile_data
 
 
 class SpritePane(gtk.VBox):
