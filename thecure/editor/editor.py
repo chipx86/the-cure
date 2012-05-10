@@ -296,7 +296,7 @@ class LevelGrid(gtk.DrawingArea):
         if to_local_pixels:
             offset_row, offset_col = self._get_offsets()
         else:
-            offset_row =0
+            offset_row = 0
             offset_col = 0
 
         return pygame.Rect((rect.x - offset_col) * self.tile_width,
@@ -422,7 +422,7 @@ class LevelGrid(gtk.DrawingArea):
             if not self.show_active_layer_only:
                 self._redraw_tiles(tile_x, tile_y)
 
-        self.queue_draw_area(*tile_area)
+        self.queue_draw_area(*self._convert_to_local_pixels(tile_area))
 
     def _fill(self, e):
         def can_place_at(x, y):
