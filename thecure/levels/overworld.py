@@ -59,15 +59,20 @@ class Overworld(Level):
 
     def add_item(self, name, text):
         self.has_items[name] = False
+
+        item = Sprite(name)
+        item.move_to(*self.eventboxes[name].rects[0].topleft)
+        self.layer_map['bg2'].add(item)
+
         self.connect_eventbox_enter(
             name,
-            lambda obj: self._on_item_entered(name, text),
+            lambda: self._on_item_entered(name, text, item),
             True)
 
-    def _on_item_entered(self, name, text):
+    def _on_item_entered(self, name, text, item):
         self.engine.ui_manager.show_monologue(text)
         self.has_items[name] = True
+        item.remove()
 
     def _on_lostboy_enter(self):
-        print 'fading out'
         self.lost_boy.fadeout()
