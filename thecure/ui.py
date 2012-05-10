@@ -152,10 +152,11 @@ class UIManager(object):
         return textbox
 
     def show_monologue(self, text, timeout_ms=None, **kwargs):
-        textbox = TextBox(self, text, stay_open=True, **kwargs)
+        lines = text.split('\n')
+        textbox = TextBox(self, lines, stay_open=True, **kwargs)
         textbox.resize(self.size[0] - 2 * self.SCREEN_PADDING -
                        self.MONOLOGUE_X,
-                       self.MONOLOGUE_HEIGHT)
+                       self.MONOLOGUE_HEIGHT * len(lines))
 
         clip_rect = self.engine.camera.rect
         offset = (-clip_rect.x, -clip_rect.y)
