@@ -105,15 +105,25 @@ class Level(object):
     def unregister_for_events(self, obj):
         self.event_handlers.remove(obj)
 
-    def add_monologue(self, eventbox_name, text, timeout_ms=None):
-        self.eventboxes[eventbox_name].object_entered.connect(
-            lambda obj: self._show_monologue_once(obj, eventbox_name, text))
+    def remove_eventbox(self, name):
+        self.eventboxes[name].disconnect()
+        del self.eventboxes[name]
 
-    def _show_monologue_once(self, obj, eventbox_name, text):
-        if obj == self.engine.player:
-            self.engine.ui_manager.show_monologue(text)
-            self.eventboxes[eventbox_name].disconnect()
-            del self.eventboxes[eventbox_name]
+    def connect_eventbox_enter(self, name, cb, only_once=False):
+        self.eventboxes[name].object_entered.connect(
+            lambda obj: self._on_eventbox_entered(name, cb, only_once))
+
+    def _on_eventbox_entered(self, name, cb, only_once):
+        cb()
+
+        if only_once:
+            self.remove_eventbox(name)
+
+    def add_monologue(self, eventbox_name, text, timeout_ms=None):
+        self.connect_eventbox_enter(
+            eventbox_name,
+            lambda: self.engine.ui_manager.show_monologue(text, timeout_ms),
+            True)
 
     def on_tick(self):
         for layer in self.layers:
