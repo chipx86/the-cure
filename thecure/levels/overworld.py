@@ -61,7 +61,7 @@ class Overworld(Level):
 
         item = Sprite(name)
         item.move_to(*self.eventboxes[name].rects[0].topleft)
-        self.layer_map['bg2'].add(item)
+        self.layer_map['items'].add(item)
 
         self.connect_eventbox_enter(
             name,

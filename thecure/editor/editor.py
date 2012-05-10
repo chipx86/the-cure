@@ -25,10 +25,11 @@ from thecure.sprites import Tile
 
 
 # XXX Hard-coding these is fragile.
-LAYERS = ['bg', 'bg2', 'main', 'fg', 'fg2', 'events']
+LAYERS = ['bg', 'bg2', 'items', 'main', 'fg', 'fg2', 'events']
 LAYER_NAMES = [
     'Background Layer',
     'Background Detail Layer',
+    'Items',
     'Main Layer',
     'Foreground Layer',
     'Foreground Detail Layer',
