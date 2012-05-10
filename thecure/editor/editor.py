@@ -1,4 +1,5 @@
 from datetime import datetime
+import math
 import os
 import sys
 
@@ -96,7 +97,6 @@ class LevelGrid(gtk.DrawingArea):
                         gtk.gdk.BUTTON_RELEASE_MASK)
 
         self.gc = None
-        self.image = None
         self.cursor_area = None
         self.current_layer = None
         self.loaded = False
@@ -121,6 +121,7 @@ class LevelGrid(gtk.DrawingArea):
         self.connect('button-press-event', self._on_button_press)
         self.connect('button-release-event', self._on_button_release)
         self.connect('motion-notify-event', self._on_motion_notify)
+        self.connect('configure-event', self._recompute_size)
 
         self.set_set_scroll_adjustments_signal('set-scroll-adjustments')
 
@@ -187,19 +188,20 @@ class LevelGrid(gtk.DrawingArea):
         self.tile_height = int(Tile.HEIGHT * self.zoom_level)
         self._recompute_size()
 
-    def _recompute_size(self):
+    def _recompute_size(self, *args, **kwargs):
         self.set_size_request(self.width * self.tile_width,
                               self.height * self.tile_height)
 
-        print 'Recomputing'
+        widget_size = self.window.get_size()
+
         self._hadjust.lower = 0
         self._hadjust.upper = self.width
-        self._hadjust.page_size = 10
+        self._hadjust.page_size = widget_size[0] / self.tile_width
         self._vadjust.lower = 0
         self._vadjust.upper = self.height
-        self._vadjust.page_size = 10
+        self._vadjust.page_size = widget_size[1] / self.tile_height
 
-        self._reload_layers()
+        self.queue_draw()
 
     def set_width(self, width):
         if width == self.width:
@@ -234,11 +236,11 @@ class LevelGrid(gtk.DrawingArea):
 
     def set_show_active_layer_only(self, show_only):
         self.show_active_layer_only = show_only
-        self._reload_layers()
+        self.queue_draw()
 
     def set_show_all_layers(self, show_all):
         self.show_all_layers = show_all
-        self._reload_layers()
+        self.queue_draw()
 
     def begin_record(self):
         if self.undo_record_count == 0:
@@ -283,43 +285,40 @@ class LevelGrid(gtk.DrawingArea):
 
         return revert_list
 
-    def _clear(self):
-        width = self.width * self.tile_width
-        height = self.height * self.tile_height
-
-        #self.image = gtk.gdk.Pixmap(self.window, width, height)
-        #self.image.draw_rectangle(self.bg_gc, True, 0, 0, width, height)
-
-    def _load_layer(self, layer_name):
-        if not self.image:
-            return
-
-        for row, row_data in enumerate(self.tiles[layer_name]):
-            for col, col_data in enumerate(row_data):
-                if col_data is None:
-                    continue
-
-                tilesheet = _load_tilesheet(col_data['filename'],
-                                            self.zoom_level)
-
-                self.image.draw_pixbuf(self.gc,
-                                       tilesheet,
-                                       int(col_data['tile_x'] * self.tile_width),
-                                       int(col_data['tile_y'] * self.tile_height),
-                                       col * self.tile_width,
-                                       row * self.tile_height,
-                                       self.tile_width,
-                                       self.tile_height)
-
     def set_current_layer(self, index):
         if index != self.current_layer:
             self.current_layer = index
 
             if self.loaded:
-                self._reload_layers()
+                self.queue_draw()
 
-    def _reload_layers(self):
-        self._clear()
+    def _tiles_rect_to_pixels(self, rect, to_local_pixels=False):
+        if to_local_pixels:
+            offset_row, offset_col = self._get_offsets()
+        else:
+            offset_row =0
+            offset_col = 0
+
+        return pygame.Rect((rect.x - offset_col) * self.tile_width,
+                           (rect.y - offset_row) * self.tile_height,
+                           rect.width * self.tile_width,
+                           rect.height * self.tile_height)
+
+    def _get_offsets(self):
+        return (int(math.floor(self._vadjust.value)),
+                int(math.floor(self._hadjust.value)))
+
+    def _get_event_offsets(self, e):
+        return (int(math.floor(e.y / self.tile_height)),
+                int(math.floor(e.x / self.tile_width)))
+
+    def _on_expose_event(self, level_grid, e):
+        evt_offset_row, evt_offset_col = self._get_event_offsets(e.area)
+        offset_row, offset_col = self._get_offsets()
+        start_row = offset_row + evt_offset_row
+        start_col = offset_col + evt_offset_col
+        end_row = start_row + int(e.area.height / self.tile_height) + 1
+        end_col = start_col + int(e.area.width / self.tile_width) + 1
 
         if self.show_all_layers:
             max_layer = len(LAYERS)
@@ -328,54 +327,61 @@ class LevelGrid(gtk.DrawingArea):
 
         for i in range(max_layer):
             if not self.show_active_layer_only or self.current_layer == i:
-                self._load_layer(LAYERS[i])
+                self._draw_tiles(self.tiles[LAYERS[i]], start_row,
+                                 end_row, start_col, end_col,
+                                 evt_offset_row, evt_offset_col)
 
-        self.queue_draw()
+        if self.cursor_area:
+            area = self._convert_to_local_pixels(self.cursor_area)
 
-    def _tiles_rect_to_pixels(self, rect):
-        return pygame.Rect(rect.x * self.tile_width,
-                           rect.y * self.tile_height,
-                           rect.width * self.tile_width,
-                           rect.height * self.tile_height)
+            self.window.draw_rectangle(
+                self.cursor_gc, False,
+                area[0], area[1], area[2] - 1, area[3] - 1)
 
-    def _on_expose_event(self, level_grid, e):
-        if self.image:
-            self.window.draw_drawable(self.gc, self.image, e.area.x, e.area.y,
-                                      e.area.x, e.area.y, e.area.width,
-                                      e.area.height)
+        if self.current_layer >= LAYERS.index('events'):
+            font_desc = pango.FontDescription()
+            font_desc.set_size(int(pango.SCALE *
+                                   min(24 * self.zoom_level, 12)))
 
-            if self.cursor_area:
-                self.window.draw_rectangle(self.cursor_gc, False,
-                                           *self.cursor_area)
+            for eventbox in self.eventboxes:
+                rect = eventbox['rect']
 
-            if self.current_layer >= LAYERS.index('events'):
-                font_desc = pango.FontDescription()
-                font_desc.set_size(int(pango.SCALE *
-                                       min(24 * self.zoom_level, 12)))
+                if rect.width <= 0 or rect.height <= 0:
+                    continue
 
-                for eventbox in self.eventboxes:
-                    rect = eventbox['rect']
+                pixels_rect = self._tiles_rect_to_pixels(rect, True)
 
-                    if rect.width <= 0 or rect.height <= 0:
-                        continue
+                self.window.draw_rectangle(self.eventbox_gc, True,
+                                           *pixels_rect)
+                layout = self.create_pango_layout(eventbox['name'])
+                layout.set_width(pixels_rect.width * pango.SCALE)
+                layout.set_ellipsize(pango.ELLIPSIZE_END)
+                layout.set_alignment(pango.ALIGN_CENTER)
 
-                    pixels_rect = self._tiles_rect_to_pixels(rect)
+                layout.set_font_description(font_desc)
 
-                    self.window.draw_rectangle(self.eventbox_gc, True,
-                                               *pixels_rect)
-                    layout = self.create_pango_layout(eventbox['name'])
-                    layout.set_width(pixels_rect.width * pango.SCALE)
-                    layout.set_ellipsize(pango.ELLIPSIZE_END)
-                    layout.set_alignment(pango.ALIGN_CENTER)
+                size = layout.get_pixel_size()
+                self.window.draw_layout(
+                    self.gc,
+                    pixels_rect.x,
+                    pixels_rect.y + (pixels_rect.height - size[1]) / 2,
+                    layout)
 
-                    layout.set_font_description(font_desc)
+    def _draw_tiles(self, tiles, start_row, end_row, start_col, end_col,
+                    offset_row, offset_col):
+        for row, row_data in enumerate(tiles[start_row:end_row]):
+            for col, col_data in enumerate(row_data[start_col:end_col]):
+                if col_data is not None:
+                    tilesheet = _load_tilesheet(col_data['filename'],
+                                                self.zoom_level)
 
-                    size = layout.get_pixel_size()
-                    self.window.draw_layout(
-                        self.gc,
-                        pixels_rect.x,
-                        pixels_rect.y + (pixels_rect.height - size[1]) / 2,
-                        layout)
+                    self.window.draw_pixbuf(self.gc, tilesheet,
+                        int(col_data['tile_x'] * self.tile_width),
+                        int(col_data['tile_y'] * self.tile_height),
+                        (offset_col + col) * self.tile_width,
+                        (offset_row + row) * self.tile_height,
+                        self.tile_width,
+                        self.tile_height)
 
     def _place_tile_from_event(self, e):
         tile_area = self._get_tile_area(e)
@@ -388,26 +394,10 @@ class LevelGrid(gtk.DrawingArea):
                          self.tile_list.selected_tile)
 
     def _redraw_tiles(self, x, y):
-        tile_area = (x * self.tile_width, y * self.tile_height,
-                     self.tile_width, self.tile_height)
-        self.image.draw_rectangle(self.bg_gc, True, *tile_area)
-
-        for layer_name in LAYERS:
-            layer_tile = self.tiles[layer_name][y][x]
-
-            if layer_tile:
-                self._draw_tile(layer_tile, tile_area)
-
-    def _draw_tile(self, tile, tile_area):
-        pixbuf = _load_tile(tile['filename'],
-                            tile['tile_x'],
-                            tile['tile_y'],
-                            self.zoom_level)
-        self.image.draw_pixbuf(self.gc,
-                               pixbuf,
-                               0,
-                               0,
-                               *tile_area)
+        self.queue_draw_area(x * self.tile_width,
+                             y * self.tile_height,
+                             self.tile_width,
+                             self.tile_height)
 
     def _place_tile(self, tile_x, tile_y, tile, layer=None, record=True):
         layer = layer or self.current_layer
@@ -425,11 +415,8 @@ class LevelGrid(gtk.DrawingArea):
                 tiles[tile_y][tile_x] = None
                 self._redraw_tiles(tile_x, tile_y)
 
-            self._draw_tile(tile, tile_area)
-
             tiles[tile_y][tile_x] = tile
         else:
-            self.image.draw_rectangle(self.bg_gc, True, *tile_area)
             tiles[tile_y][tile_x] = None
 
             if not self.show_active_layer_only:
@@ -537,13 +524,15 @@ class LevelGrid(gtk.DrawingArea):
                 'rect': self._cur_eventbox_rect,
                 'name': 'eventbox%s,%s' % self._cur_eventbox_rect.topleft,
             })
+
+            self.queue_draw_area(*self._tiles_rect_to_pixels(rect, True))
         elif self.action == self.REMOVE_EVENTBOX_ACTION:
             rect = pygame.Rect(self._get_tile_area(e, False))
 
             for eventbox in self.eventboxes:
                 if eventbox['rect'].contains(rect):
                     self.queue_draw_area(
-                        *self._tiles_rect_to_pixels(eventbox['rect']))
+                        *self._tiles_rect_to_pixels(eventbox['rect'], True))
                     self.eventboxes.remove(eventbox)
                     break
 
@@ -578,16 +567,12 @@ class LevelGrid(gtk.DrawingArea):
 
         if self.cursor_area != old_cursor_area:
             if old_cursor_area:
-                self.queue_draw_area(old_cursor_area[0],
-                                     old_cursor_area[1],
-                                     old_cursor_area[2] + 1,
-                                     old_cursor_area[3] + 1)
+                self.queue_draw_area(
+                    *self._convert_to_local_pixels(old_cursor_area))
 
             if self.cursor_area:
-                self.queue_draw_area(self.cursor_area[0],
-                                     self.cursor_area[1],
-                                     self.cursor_area[2] + 1,
-                                     self.cursor_area[3] + 1)
+                self.queue_draw_area(
+                    *self._convert_to_local_pixels(self.cursor_area))
 
         if self.action == self.PLACE_TILE_ACTION:
             if self.drawing:
@@ -609,34 +594,39 @@ class LevelGrid(gtk.DrawingArea):
                 self._cur_eventbox_rect.y
 
             self.queue_draw_area(
-                *self._tiles_rect_to_pixels(self._cur_eventbox_rect))
+                *self._tiles_rect_to_pixels(self._cur_eventbox_rect, True))
 
     def do_set_scroll_adjustments(self, hadjustment, vadjustment):
-        hadjustment.connect('value-changed', self._on_hadjust_changed)
         self._hadjust = hadjustment
-        vadjustment.connect('value-changed', self._on_vadjust_changed)
         self._vadjust = vadjustment
 
-    def _on_hadjust_changed(self, hadjust):
-        self._update_view()
+        if hadjustment:
+            hadjustment.connect('value-changed', self._update_view)
 
-    def _on_vadjust_changed(self, hadjust):
-        self._update_view()
+        if vadjustment:
+            vadjustment.connect('value-changed', self._update_view)
 
-    def _update_view(self):
-        widget_size = self.window.get_size()
-        print 'updating image'
-        self.image = gtk.gdk.Pixmap(self.window, *widget_size)
-        self._reload_layers()
+    def _update_view(self, *args, **kwargs):
+        self.queue_draw()
 
     def _is_tile_area_valid(self, area):
         return (area is not None and
                 0 <= area[0] < self.width * self.tile_width and
                 0 <= area[1] < self.height * self.tile_height)
 
+    def _convert_to_local_pixels(self, area):
+        offset_row, offset_col = self._get_offsets()
+
+        return (int(area[0] - offset_col * self.tile_width),
+                int(area[1] - offset_row * self.tile_height),
+                area[2], area[3])
+
     def _get_tile_area(self, e, in_pixels=True):
-        rect = pygame.Rect(e.x / self.tile_width,
-                           e.y / self.tile_height,
+        offsets = self._get_offsets()
+        event_offsets = self._get_event_offsets(e)
+
+        rect = pygame.Rect(offsets[1] + event_offsets[1],
+                           offsets[0] + event_offsets[0],
                            1, 1)
 
         if in_pixels:
