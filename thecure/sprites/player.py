@@ -23,6 +23,10 @@ class Bullet(Sprite):
         super(Bullet, self).move_by(*args, **kwargs)
 
         camera_rect = get_engine().camera.rect
+
+        if not self.layer:
+            return
+
         screen_size = self.layer.parent.size
 
         if (self.started and
