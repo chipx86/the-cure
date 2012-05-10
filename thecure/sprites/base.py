@@ -195,6 +195,7 @@ class Sprite(BaseSprite):
 
         # Signals
         self.moved = Signal()
+        self.dead = Signal()
 
         # State
         self.quad_trees = set()
@@ -262,6 +263,7 @@ class Sprite(BaseSprite):
         if self.blink_count == self.MAX_BLINKS:
             self.visible = 1
             self.death_timer.stop()
+            self.dead.emit()
             self.remove()
 
     def remove(self):

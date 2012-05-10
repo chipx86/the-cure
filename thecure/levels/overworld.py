@@ -1,6 +1,5 @@
 import pygame
 
-from thecure.eventbox import EventBox
 from thecure.levels.base import Level
 from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy
 

@@ -74,23 +74,28 @@ class Player(WalkingSprite):
     MAX_HEALTH = 3
 
     SHOOT_MS = 500
+    FALL_SPEED = 10
 
     SPRITESHEET_FRAMES = {
         Direction.DOWN: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
                 'shooting': [(2, 0)],
+                'falling': [(1, 0)],
             }),
         Direction.LEFT: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
                 'shooting': [(0, 1)],
+                'falling': [(1, 1)],
             }),
         Direction.RIGHT: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
                 'shooting': [(0, 2)],
+                'falling': [(1, 2)],
             }),
         Direction.UP: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.UP], **{
                 'shooting': [(2, 3)],
+                'falling': [(1, 3)],
             }),
     }
 
@@ -103,7 +108,10 @@ class Player(WalkingSprite):
 
         # State
         self.running = False
+        self.falling = False
         self.shooting = False
+        self.can_run = True
+        self.allow_player_control = True
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
                                  cb=self.shoot,
                                  start_automatically=False)
@@ -120,6 +128,9 @@ class Player(WalkingSprite):
         self._update_animation()
 
     def handle_event(self, event):
+        if not self.allow_player_control:
+            return
+
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
                 self.move_direction(Direction.RIGHT)
@@ -192,6 +203,9 @@ class Player(WalkingSprite):
         return not isinstance(obj, Bullet) or obj.owner_sprite != self
 
     def set_running(self, running):
+        if not self.can_run:
+            return
+
         self.running = running
 
         if running:
@@ -208,6 +222,14 @@ class Player(WalkingSprite):
         self.running = False
         self._update_animation()
 
+    def fall(self):
+        self.collidable = False
+        self.stop_running()
+        self.set_direction(Direction.DOWN)
+        self.velocity = (0, self.FALL_SPEED)
+        self.falling = True
+        self._update_animation()
+
     def _update_animation(self):
         if self.velocity == (0, 0):
             if self.shooting and self.frame_state != 'shooting':
@@ -221,6 +243,8 @@ class Player(WalkingSprite):
         else:
             if self.running and self.frame_state != 'running':
                 self.frame_state = 'running'
+            elif self.falling:
+                self.frame_state = 'falling'
             elif self.frame_state != 'walking':
                 self.frame_state = 'walking'
             else:

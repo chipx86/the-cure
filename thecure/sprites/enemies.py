@@ -94,3 +94,8 @@ class InfectedHuman(Enemy):
         self.exclamation.remove()
         self.exclamation = None
         self.following = True
+
+
+class InfectedWife(InfectedHuman):
+    MOVE_SPEED = 1
+    NAME = 'infectedwife'
