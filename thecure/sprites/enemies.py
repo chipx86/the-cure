@@ -2,6 +2,7 @@ from pygame.locals import *
 
 from thecure import get_engine
 from thecure.sprites.base import Direction, Sprite, WalkingSprite
+from thecure.sprites.behaviors import WanderMixin
 from thecure.timer import Timer
 
 
@@ -99,3 +100,38 @@ class InfectedHuman(Enemy):
 class InfectedWife(InfectedHuman):
     MOVE_SPEED = 1
     NAME = 'infectedwife'
+
+
+class Snake(Enemy, WanderMixin):
+    NAME = 'snake'
+    MOVE_SPEED = 1
+    SPRITESHEET_ROWS = 4
+    SPRITESHEET_COLS = 3
+    SPRITESHEET_FRAMES = {
+        Direction.DOWN: {
+            'default': [(1, 0)],
+            'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
+        },
+        Direction.LEFT: {
+            'default': [(1, 1)],
+            'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
+        },
+        Direction.RIGHT: {
+            'default': [(1, 2)],
+            'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
+        },
+        Direction.UP: {
+            'default': [(1, 3)],
+            'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
+        },
+    }
+
+    def __init__(self):
+        super(Snake, self).__init__()
+
+        self.frame_state = 'walking'
+
+    def start(self):
+        super(Snake, self).start()
+        self.anim_timer.start()
+        self.wander()
