@@ -171,7 +171,11 @@ class Layer(object):
             if sprite.visible and not force_remove:
                 self.tick_sprites.append(sprite)
             else:
-                self.tick_sprites.remove(sprite)
+                try:
+                    self.tick_sprites.remove(sprite)
+                except ValueError:
+                    # It may be gone now.
+                    pass
 
     def __iter__(self):
         return iter(self.quad_tree)

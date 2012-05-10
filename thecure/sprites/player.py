@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 
+from thecure import get_engine
 from thecure.signals import Signal
 from thecure.sprites.base import Direction, Sprite, WalkingSprite
 from thecure.timer import Timer
@@ -12,6 +13,7 @@ class Bullet(Sprite):
     OFFSET_X = 6
     OFFSET_Y = 12
     DAMAGE_VALUE = 5
+    OFFSCREEN_DIST = 100
 
     def __init__(self, owner_sprite):
         super(Bullet, self).__init__()
@@ -20,12 +22,18 @@ class Bullet(Sprite):
     def move_by(self, *args, **kwargs):
         super(Bullet, self).move_by(*args, **kwargs)
 
+        camera_rect = get_engine().camera.rect
+        screen_size = self.layer.parent.size
+
         if (self.started and
-            (self.rect.x == 0 or
-             self.rect.right == self.layer.parent.size[0] or
-             self.rect.y == 0 or
-             self.rect.bottom == self.layer.parent.size[1])):
-            # We've hit the edge of the screen, so disappear.
+            (self.rect.x <= max(camera_rect.x - self.OFFSCREEN_DIST, 0) or
+             self.rect.y <= max(camera_rect.y - self.OFFSCREEN_DIST, 0) or
+             self.rect.right > min(camera_rect.right + self.OFFSCREEN_DIST,
+                                   screen_size[0]) or
+             self.rect.bottom > min(camera_rect.bottom + self.OFFSCREEN_DIST,
+                                    screen_size[1]))):
+            # We've hit the edge of the world, or far enough away from the
+            # camera, so disappear.
             self.remove()
 
     def move_beside(self, sprite, direction):
