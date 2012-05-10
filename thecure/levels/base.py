@@ -27,6 +27,8 @@ class Level(object):
         self._prev_clip_rect = None
         self._loaded_chunk_ranges = None
         self._loaded_tiles = {}
+        self._filename_map = []
+        self._tile_map = []
 
         self.load_level()
 
@@ -53,6 +55,9 @@ class Level(object):
             for row in xrange(chunk_rows)
         ]
 
+        rev_tile_map = {}
+        rev_filename_map = {}
+
         for layer_data in loader.iter_layers():
             layer_name = layer_data['name']
 
@@ -66,16 +71,35 @@ class Level(object):
             chunk_row = 0
             chunk_col = 0
 
-            for tile_data in loader.iter_tiles(layer_name):
-                row = tile_data['row']
-                col = tile_data['col']
+            for stored_tile_data in loader.iter_tiles(layer_name):
+                row = stored_tile_data['row']
+                col = stored_tile_data['col']
                 chunk_row = row / self.CHUNK_SIZE[1]
                 chunk_col = col / self.CHUNK_SIZE[0]
 
-                if layer_name not in self.chunks[chunk_row][chunk_col]:
-                    self.chunks[chunk_row][chunk_col][layer_name] = []
+                filename = stored_tile_data['tile_file']
 
-                self.chunks[chunk_row][chunk_col][layer_name].append(tile_data)
+                if filename not in rev_filename_map:
+                    filename_id = len(self._filename_map)
+                    self._filename_map.append(filename)
+                    rev_filename_map[filename] = filename_id
+                else:
+                    filename_id = rev_filename_map[filename]
+
+                tile_data = (filename_id,
+                             (stored_tile_data['tile_x'],
+                              stored_tile_data['tile_y']))
+
+                if tile_data not in rev_tile_map:
+                    tile_id = len(self._tile_map)
+                    self._tile_map.append(tile_data)
+                    rev_tile_map[tile_data] = tile_id
+                else:
+                    tile_id = rev_tile_map[tile_data]
+
+                chunk_layers = self.chunks[chunk_row][chunk_col]
+                chunk_layers.setdefault(layer_name, []).append(
+                    (row * Tile.HEIGHT, col * Tile.WIDTH, tile_id))
 
         for name, eventbox_data in loader.iter_eventboxes():
             rect = pygame.Rect(eventbox_data['rect'])
@@ -100,12 +124,13 @@ class Level(object):
         for layer_name, tiles in self.chunks[chunk_row][chunk_col].iteritems():
             layer = self.layer_map[layer_name]
 
-            for tile_data in tiles:
-                tile = Tile(filename='tiles/' + tile_data['tile_file'],
-                            tile_offset=(tile_data['tile_x'],
-                                         tile_data['tile_y']))
-                tile.move_to(tile_data['col'] * Tile.WIDTH,
-                             tile_data['row'] * Tile.HEIGHT)
+            for row, col, tile_id in tiles:
+                tile_file_id, tile_offset = self._tile_map[tile_id]
+                tile_filename = self._filename_map[tile_file_id]
+
+                tile = Tile(filename='tiles/' + tile_filename,
+                            tile_offset=tile_offset)
+                tile.move_to(col, row)
                 layer.add(tile)
                 loaded_tiles.append(tile)
 
