@@ -990,6 +990,7 @@ class LevelEditor(gtk.Window):
         self.level_grid.load(loader)
         self.width_entry.set_text(str(self.level_grid.width))
         self.height_entry.set_text(str(self.level_grid.height))
+        self._on_layer_changed()
 
     def save(self):
         writer = LevelWriter(self.level_combo.get_active_text())
