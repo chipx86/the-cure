@@ -135,6 +135,8 @@ class UIManager(object):
         self.widgets = []
         self.timers = []
 
+        self.active_monologue = None
+
         self.default_font_file = get_font_filename()
         self.font = pygame.font.Font(self.default_font_file, 20)
         self.small_font = pygame.font.Font(self.default_font_file, 16)
@@ -151,12 +153,27 @@ class UIManager(object):
                         self.SCREEN_PADDING)
         return textbox
 
-    def show_monologue(self, text, timeout_ms=None, **kwargs):
-        lines = text.split('\n')
+    def show_monologue(self, text, timeout_ms=None, on_done=None, **kwargs):
+        def _next_monologue():
+            self.close(self.active_monologue)
+
+            if len(text) > 1:
+                self.show_monologue(text[1:], timeout_ms, on_done, **kwargs)
+            elif on_done:
+                on_done()
+
+        if not isinstance(text, list):
+            text = [text]
+
+        if self.active_monologue:
+            self.close(self.active_monologue)
+
+        lines = text[0].split('\n')
         textbox = TextBox(self, lines, stay_open=True, **kwargs)
         textbox.resize(self.size[0] - 2 * self.SCREEN_PADDING -
                        self.MONOLOGUE_X,
                        self.MONOLOGUE_HEIGHT * len(lines))
+        self.active_monologue = textbox
 
         clip_rect = self.engine.camera.rect
         offset = (-clip_rect.x, -clip_rect.y)
@@ -166,7 +183,7 @@ class UIManager(object):
                         self.MONOLOGUE_Y_OFFSET)
 
         timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
-                      cb=lambda: self.close(textbox),
+                      cb=_next_monologue,
                       one_shot=True)
 
         return textbox
