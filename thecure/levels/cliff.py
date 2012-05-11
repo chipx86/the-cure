@@ -59,6 +59,9 @@ class Cliff(Level):
     def _on_wife_dead(self):
         self.killed_wife = True
 
+        Timer(ms=1000, cb=self._say_sorry, one_shot=True)
+
+    def _say_sorry(self):
         self.engine.ui_manager.show_monologue([
             "Laura, I'm so sorry. I'm so, so sorry.",
             "I'm a monster. I should just kill myself.",
@@ -121,7 +124,7 @@ class Cliff(Level):
 
         if self.killed_wife:
             s = "I'll test it on myself to make sure there aren't any side " \
-                "effects...",
+                "effects..."
         else:
             s = 'Here goes nothing'
 

@@ -39,6 +39,7 @@ class Wife(ChaseMixin, Human, WalkingSprite):
     MOVE_SPEED = 1
     CHASE_SPEED = 1
     WANDER_KEY_NAME = 'walking'
+    DEFAULT_HEALTH = 1
     CLEAN_NAME = 'wife'
     INFECTED_NAME = 'infectedwife'
     NAME = INFECTED_NAME
