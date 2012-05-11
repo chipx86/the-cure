@@ -207,7 +207,7 @@ class AttackLineMixin(object):
 
 
 class ChaseMixin(object):
-    APPROACH_DISTANCE = 300
+    APPROACH_DISTANCE = 250
     CHASE_SPEED = 3
     STOP_FOLLOWING_DISTANCE = 1000
     SHOW_EXCLAMATION = True

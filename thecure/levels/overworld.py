@@ -78,6 +78,133 @@ class Overworld(Level):
         },
     ]
 
+    INFECTED_HUMANS = [
+        {
+            'name': 'boy1',
+            'pos': (4224, 5888),
+            'dir': Direction.RIGHT,
+            'wander': False,
+        },
+        {
+            'name': 'girl1',
+            'pos': (4416, 5888),
+            'dir': Direction.LEFT,
+            'wander': False,
+        },
+        {
+            'name': 'girl1',
+            'pos': (4992, 5184),
+            'dir': Direction.DOWN,
+            'wander': True,
+        },
+        {
+            'name': 'girl1',
+            'pos': (6080, 5056),
+            'dir': Direction.RIGHT,
+            'wander': True,
+        },
+        {
+            'name': 'boy1',
+            'pos': (6272, 5888),
+            'dir': Direction.LEFT,
+            'wander': True,
+        },
+        {
+            'name': 'girl1',
+            'pos': (5248, 5952),
+            'dir': Direction.DOWN,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (6272, 6848),
+            'dir': Direction.LEFT,
+            'wander': True,
+        },
+        {
+            'name': 'girl1',
+            'pos': (5440, 6976),
+            'dir': Direction.DOWN,
+            'wander': True,
+        },
+        {
+            'name': 'girl1',
+            'pos': (4992, 6848),
+            'dir': Direction.DOWN,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (3968, 7232),
+            'dir': Direction.DOWN,
+            'wander': True,
+        },
+        {
+            'name': 'boy1',
+            'pos': (4160, 4672),
+            'dir': Direction.RIGHT,
+            'wander': True,
+        },
+        {
+            'name': 'boy1',
+            'pos': (5696, 7552),
+            'dir': Direction.RIGHT,
+            'wander': True,
+        },
+        # Near bridge
+        {
+            'name': 'boy1',
+            'pos': (7104, 6592),
+            'dir': Direction.UP,
+            'wander': True,
+        },
+        # Camp site (right)
+        {
+            'name': 'boy1',
+            'pos': (3008, 2176),
+            'dir': Direction.LEFT,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (2688, 2304),
+            'dir': Direction.UP,
+            'wander': False,
+        },
+        # Camp site (left)
+        {
+            'name': 'boy1',
+            'pos': (384, 2048),
+            'dir': Direction.DOWN,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (192, 2112),
+            'dir': Direction.RIGHT,
+            'wander': False,
+        },
+        # Forest (top-right)
+        {
+            'name': 'boy1',
+            'pos': (2816, 320),
+            'dir': Direction.DOWN,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (2368, 256),
+            'dir': Direction.RIGHT,
+            'wander': False,
+        },
+        {
+            'name': 'boy1',
+            'pos': (2368, 640),
+            'dir': Direction.LEFT,
+            'wander': True,
+        },
+    ]
+
     def setup(self):
         self.has_items = {}
 
@@ -117,17 +244,12 @@ class Overworld(Level):
             "It's all gone to hell. All of it. This town is done for. It's "
             "all my fault.")
 
-        human = InfectedHuman('boy1')
-        human.move_to(4224, 5888)
-        self.main_layer.add(human)
-        human.set_direction(Direction.RIGHT)
-        human.auto_wander = False
-
-        human = InfectedHuman('girl1')
-        human.move_to(4416, 5888)
-        self.main_layer.add(human)
-        human.set_direction(Direction.LEFT)
-        human.auto_wander = False
+        for info in self.INFECTED_HUMANS:
+            human = InfectedHuman(info['name'])
+            human.move_to(*info['pos'])
+            self.main_layer.add(human)
+            human.set_direction(info['dir'])
+            human.auto_wander = info['wander']
 
         # Forest
         self.add_monologue('find-flower',
