@@ -29,6 +29,7 @@ class Level(object):
         self._loaded_tiles = {}
         self._filename_map = []
         self._tile_map = []
+        self._allowed_spawn_bitmap = []
 
         self.load_level()
 
@@ -44,15 +45,24 @@ class Level(object):
         self.size = (level_width * Tile.WIDTH,
                      level_height * Tile.HEIGHT)
 
-        chunk_rows = int(math.ceil(float(level_height) / self.CHUNK_SIZE[1]))
-        chunk_cols = int(math.ceil(float(level_width) / self.CHUNK_SIZE[0]))
+        self.chunk_rows = int(math.ceil(float(level_height)
+                                        / self.CHUNK_SIZE[1]))
+        self.chunk_cols = int(math.ceil(float(level_width)
+                                        / self.CHUNK_SIZE[0]))
 
         self.chunks = [
             [
                 {}
-                for col in xrange(chunk_cols)
+                for col in xrange(self.chunk_cols)
             ]
-            for row in xrange(chunk_rows)
+            for row in xrange(self.chunk_rows)
+        ]
+
+        self._allowed_spawn_bitmap = [
+            [
+                1 for x in xrange(level_width)
+            ]
+            for y in xrange(level_height)
         ]
 
         rev_tile_map = {}
@@ -60,6 +70,8 @@ class Level(object):
 
         for layer_data in loader.iter_layers():
             layer_name = layer_data['name']
+
+            store_spawn_bitmap = layer_name in ('main', 'fg', 'fg2')
 
             layer = Layer(layer_name, layer_data['index'], self)
             self.layers.append(layer)
@@ -101,6 +113,9 @@ class Level(object):
                 chunk_layers.setdefault(layer_name, []).append(
                     (row * Tile.HEIGHT, col * Tile.WIDTH, tile_id))
 
+                if store_spawn_bitmap:
+                    self._allowed_spawn_bitmap[row][col] = 0
+
         for name, eventbox_data in loader.iter_eventboxes():
             rect = pygame.Rect(eventbox_data['rect'])
             rect.x *= Tile.WIDTH
@@ -112,6 +127,12 @@ class Level(object):
             eventbox.rects.append(rect)
             eventbox.watch_object_moves(self.engine.player)
             self.eventboxes[name] = eventbox
+
+    def get_tile_data(self, row, col, layer_name):
+        chunk_row = row / self.CHUNK_SIZE[1]
+        chunk_col = col / self.CHUNK_SIZE[0]
+
+        return self.chunks[chunk_row][chunk_col].get(layer_name, [])
 
     def _load_chunk(self, chunk_row, chunk_col):
         key = (chunk_row, chunk_col)
@@ -187,6 +208,9 @@ class Level(object):
         pass
 
     def start(self):
+        # We don't need this anymore.
+        self._allowed_spawn_bitmap = []
+
         for layer in self.layers:
             layer.start()
 

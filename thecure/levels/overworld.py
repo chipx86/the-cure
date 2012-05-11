@@ -134,13 +134,11 @@ class Overworld(Level):
                 while 1:
                     x = random.randint(rect.left, rect.right)
                     y = random.randint(rect.top, rect.bottom)
-                    mob_rect = pygame.Rect(x, y, Tile.WIDTH, Tile.HEIGHT)
 
-                    if not self.main_layer.has_sprites_in_rect(mob_rect):
+                    if self._allowed_spawn_bitmap[y][x]:
                         break
 
                 mob_cls = random.choice(mob_classes)
-
                 mob = mob_cls()
                 mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
                 self.main_layer.add(mob)
