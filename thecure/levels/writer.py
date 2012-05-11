@@ -19,11 +19,17 @@ class LevelWriter(object):
         eventboxes_map = {}
 
         for eventbox in eventboxes:
-            rect = eventbox['rect']
+            name = eventbox['name']
 
-            eventboxes_map[eventbox['name']] = {
-                'rect': [rect.x, rect.y, rect.width, rect.height],
-            }
+            rects = [[rect.x, rect.y, rect.width, rect.height]
+                     for rect in eventbox['rect']]
+
+            if name in eventboxes_map:
+                eventboxes_map[name]['rect'] += rects
+            else:
+                eventboxes_map[name] = {
+                    'rect': rects
+                }
 
         data = {
             'files': files_list,

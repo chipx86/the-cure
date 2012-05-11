@@ -159,11 +159,14 @@ class LevelGrid(gtk.DrawingArea):
                 }
 
         for name, eventbox_data in self.loader.iter_eventboxes():
-            rect = eventbox_data['rect']
+            rects = eventbox_data['rect']
+
+            if not isinstance(rects[0], list):
+                rects = [rects]
 
             self.eventboxes.append({
                 'name': name,
-                'rect': pygame.Rect(rect),
+                'rect': [pygame.Rect(rect) for rect in rects],
             })
 
         self._recompute_size()
@@ -358,28 +361,29 @@ class LevelGrid(gtk.DrawingArea):
                                    min(24 * self.zoom_level, 12)))
 
             for eventbox in self.eventboxes:
-                rect = eventbox['rect']
+                rects = eventbox['rect']
 
-                if rect.width <= 0 or rect.height <= 0:
-                    continue
+                for rect in rects:
+                    if rect.width <= 0 or rect.height <= 0:
+                        continue
 
-                pixels_rect = self._tiles_rect_to_pixels(rect, True)
+                    pixels_rect = self._tiles_rect_to_pixels(rect, True)
 
-                self.window.draw_rectangle(self.eventbox_gc, True,
-                                           *pixels_rect)
-                layout = self.create_pango_layout(eventbox['name'])
-                layout.set_width(pixels_rect.width * pango.SCALE)
-                layout.set_ellipsize(pango.ELLIPSIZE_END)
-                layout.set_alignment(pango.ALIGN_CENTER)
+                    self.window.draw_rectangle(self.eventbox_gc, True,
+                                               *pixels_rect)
+                    layout = self.create_pango_layout(eventbox['name'])
+                    layout.set_width(pixels_rect.width * pango.SCALE)
+                    layout.set_ellipsize(pango.ELLIPSIZE_END)
+                    layout.set_alignment(pango.ALIGN_CENTER)
 
-                layout.set_font_description(font_desc)
+                    layout.set_font_description(font_desc)
 
-                size = layout.get_pixel_size()
-                self.window.draw_layout(
-                    self.gc,
-                    pixels_rect.x,
-                    pixels_rect.y + (pixels_rect.height - size[1]) / 2,
-                    layout)
+                    size = layout.get_pixel_size()
+                    self.window.draw_layout(
+                        self.gc,
+                        pixels_rect.x,
+                        pixels_rect.y + (pixels_rect.height - size[1]) / 2,
+                        layout)
 
     def _draw_tiles(self, image, tiles, start_row, end_row, start_col, end_col,
                     offset_row, offset_col):
@@ -510,35 +514,17 @@ class LevelGrid(gtk.DrawingArea):
             rect = pygame.Rect(self._get_tile_area(e, False))
 
             for eventbox in self.eventboxes:
-                if eventbox['rect'].contains(rect):
-                    dialog = gtk.Dialog('Rename Event Box',
-                                        self.editor.get_parent(),
-                                        gtk.DIALOG_MODAL |
-                                        gtk.DIALOG_DESTROY_WITH_PARENT,
-                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                                         gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-                    dialog.set_default_response(gtk.RESPONSE_ACCEPT)
-
-                    entry = gtk.Entry()
-                    entry.show()
-                    dialog.vbox.pack_start(entry, False, False, 0)
-                    entry.set_text(eventbox['name'])
-                    entry.set_activates_default(True)
-
-                    response = dialog.run()
-                    eventbox['name'] = entry.get_text()
-                    dialog.destroy()
-
-                    self.queue_draw_area(
-                        *self._tiles_rect_to_pixels(eventbox['rect']))
-                    return
+                for eb_rect in eventbox['rect']:
+                    if eb_rect.contains(rect):
+                        self._rename_eventbox(eventbox)
+                        return
 
             self.begin_record()
             self.drawing = True
             self._cur_eventbox_rect = rect
 
             self.eventboxes.append({
-                'rect': self._cur_eventbox_rect,
+                'rect': [self._cur_eventbox_rect],
                 'name': 'eventbox%s,%s' % self._cur_eventbox_rect.topleft,
             })
 
@@ -547,9 +533,18 @@ class LevelGrid(gtk.DrawingArea):
             rect = pygame.Rect(self._get_tile_area(e, False))
 
             for eventbox in self.eventboxes:
-                if eventbox['rect'].contains(rect):
-                    self.queue_draw_area(
-                        *self._tiles_rect_to_pixels(eventbox['rect'], True))
+                found = False
+
+                for eb_rect in eventbox['rect']:
+                    if eb_rect.contains(rect):
+                        found = True
+                        break
+
+                if found:
+                    for eb_rect in eventbox['rect']:
+                        self.queue_draw_area(
+                            *self._tiles_rect_to_pixels(eb_rect, True))
+
                     self.eventboxes.remove(eventbox)
                     break
 
@@ -612,6 +607,28 @@ class LevelGrid(gtk.DrawingArea):
 
             self.queue_draw_area(
                 *self._tiles_rect_to_pixels(self._cur_eventbox_rect, True))
+
+    def _rename_eventbox(self, eventbox):
+        dialog = gtk.Dialog('Rename Event Box',
+                            self.editor.get_parent(),
+                            gtk.DIALOG_MODAL |
+                            gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+
+        entry = gtk.Entry()
+        entry.show()
+        dialog.vbox.pack_start(entry, False, False, 0)
+        entry.set_text(eventbox['name'])
+        entry.set_activates_default(True)
+
+        response = dialog.run()
+        eventbox['name'] = entry.get_text()
+        dialog.destroy()
+
+        for rect in eventbox['rect']:
+            self.queue_draw_area(*self._tiles_rect_to_pixels(rect))
 
     def do_set_scroll_adjustments(self, hadjustment, vadjustment):
         self._hadjust = hadjustment
