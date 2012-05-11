@@ -166,14 +166,20 @@ class Level(object):
         discards = set()
 
         if self._loaded_chunk_ranges is not None:
-            for row in xrange(self._loaded_chunk_ranges[0],
-                              self._loaded_chunk_ranges[2] + 1):
-                for col in xrange(self._loaded_chunk_ranges[1],
-                                  self._loaded_chunk_ranges[3] + 1):
+            max_chunk_row = min(self._loaded_chunk_ranges[2] + 1,
+                                self.chunk_rows)
+            max_chunk_col = min(self._loaded_chunk_ranges[3] + 1,
+                                self.chunk_cols)
+
+            for row in xrange(self._loaded_chunk_ranges[0], max_chunk_row):
+                for col in xrange(self._loaded_chunk_ranges[1], max_chunk_col):
                     discards.add((row, col))
 
-        for row in xrange(chunk_ranges[0], chunk_ranges[2] + 1):
-            for col in xrange(chunk_ranges[1], chunk_ranges[3] + 1):
+        max_chunk_row = min(chunk_ranges[2] + 1, self.chunk_rows)
+        max_chunk_col = min(chunk_ranges[3] + 1, self.chunk_cols)
+
+        for row in xrange(chunk_ranges[0], max_chunk_row):
+            for col in xrange(chunk_ranges[1], max_chunk_col):
                 self._load_chunk(row, col)
 
                 coord = (row, col)
@@ -183,9 +189,12 @@ class Level(object):
 
         self._loaded_chunk_ranges = chunk_ranges
 
-        for coord in discards:
-            for tile in self._loaded_tiles[coord]:
-                tile.remove()
+        if discards:
+            for coord in discards:
+                for tile in self._loaded_tiles[coord]:
+                    tile.remove()
+
+                del self._loaded_tiles[coord]
 
             del self._loaded_tiles[coord]
 
