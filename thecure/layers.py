@@ -2,7 +2,7 @@ import pygame
 
 
 class QuadTree(object):
-    def __init__(self, rect, depth=4, parent=None):
+    def __init__(self, rect, depth=6, parent=None):
         depth -= 1
 
         self.rect = rect
