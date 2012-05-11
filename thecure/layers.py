@@ -183,6 +183,12 @@ class Layer(object):
     def iterate_in_rect(self, rect):
         return self.quad_tree.get_sprites(rect)
 
+    def has_sprites_in_rect(self, rect):
+        for sprite in self.iterate_in_rect(rect):
+            return True
+
+        return False
+
     def handle_event(self, event):
         pass
 

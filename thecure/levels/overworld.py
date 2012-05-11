@@ -1,12 +1,81 @@
+import random
+
 import pygame
 
 from thecure.levels.base import Level
-from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy
+from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy, Snake, \
+                            Slime, Tile
 
 
 class Overworld(Level):
     name = 'overworld'
     start_pos = (3968, 6400)
+
+    MOB_SPAWN_REGIONS = [
+        # Forest
+        {
+            'rect': pygame.Rect(0, 0, 48, 38),
+            'mobs': [Slime, Snake],
+            'min': 10,
+            'max': 15,
+        },
+        # Grove area
+        {
+            'rect': pygame.Rect(7, 42, 46, 33),
+            'mobs': [Slime],
+            'min': 10,
+            'max': 20,
+        },
+        # Behind lab
+        {
+            'rect': pygame.Rect(15, 75, 24, 30),
+            'mobs': [Slime],
+            'min': 10,
+            'max': 20,
+        },
+        # Swamp
+        {
+            'rect': pygame.Rect(0, 113, 57, 43),
+            'mobs': [Snake],
+            'min': 20,
+            'max': 30,
+        },
+        # Dirt area near ocean
+        {
+            'rect': pygame.Rect(92, 104, 36, 40),
+            'mobs': [Slime],
+            'min': 15,
+            'max': 30,
+        },
+        # Desert
+        {
+            'rect': pygame.Rect(126, 98, 23, 29),
+            'mobs': [Snake],
+            'min': 10,
+            'max': 20,
+        },
+        # South-East of mountain
+        {
+            'rect': pygame.Rect(124, 38, 25, 45),
+            'mobs': [Slime],
+            'min': 10,
+            'max': 20,
+        },
+        # South of mountain
+        {
+            'rect': pygame.Rect(70, 43, 47, 19),
+            'mobs': [Slime],
+            'min': 20,
+            'max': 30,
+        },
+        # Mountain
+        {
+            'rect': pygame.Rect(69, 2, 62, 32),
+            'mobs': [Slime], # XXX
+            'min': 20,
+            'max': 30,
+        },
+    ]
 
     def setup(self):
         self.has_items = {}
@@ -55,6 +124,27 @@ class Overworld(Level):
         self.layer_map['fg'].add(self.lost_boy)
 
         self.connect_eventbox_enter('lostboy-fadeout', self._on_lostboy_enter)
+
+        for region in self.MOB_SPAWN_REGIONS:
+            mob_count = random.randint(region['min'], region['max'])
+            rect = region['rect']
+            mob_classes = region['mobs']
+
+            for i in xrange(mob_count):
+                while 1:
+                    x = random.randint(rect.left, rect.right)
+                    y = random.randint(rect.top, rect.bottom)
+                    mob_rect = pygame.Rect(x, y, Tile.WIDTH, Tile.HEIGHT)
+
+                    if not self.main_layer.has_sprites_in_rect(mob_rect):
+                        break
+
+                mob_cls = random.choice(mob_classes)
+
+                mob = mob_cls()
+                mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
+                self.main_layer.add(mob)
+                mob.set_direction(Direction.random())
 
     def add_item(self, name, text):
         self.has_items[name] = False

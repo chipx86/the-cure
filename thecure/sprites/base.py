@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 from thecure.resources import load_spritesheet_frame
@@ -10,6 +12,10 @@ class Direction(object):
     RIGHT = 1
     UP = 2
     DOWN = 3
+
+    @classmethod
+    def random(self):
+        return random.randint(0, 3)
 
 
 class BaseSprite(pygame.sprite.DirtySprite):
