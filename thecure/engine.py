@@ -20,6 +20,9 @@ class Camera(object):
         self.old_player_rect = None
 
     def update(self):
+        if self.engine.paused:
+            return
+
         player_rect = self.engine.player.rect
 
         if player_rect == self.old_player_rect:
@@ -120,7 +123,9 @@ class TheCureEngine(object):
                 if not self._handle_event(event):
                     return
 
-            self.tick.emit()
+            if not self.paused:
+                self.tick.emit()
+
             self._draw()
             self.clock.tick(self.FPS)
 
@@ -129,17 +134,22 @@ class TheCureEngine(object):
             self.quit()
             return False
 
-        if event.type == KEYDOWN and event.key == K_ESCAPE:
-            self.quit()
-            return False
+        if self.ui_manager and self.ui_manager.handle_event(event):
+            return True
+
         if event.type == KEYDOWN and event.key == K_F2:
             self.show_debug_info = not self.show_debug_info
         elif event.type == KEYDOWN and event.key == K_F3:
             self.debug_rects = not self.debug_rects
-        elif self.ui_manager.handle_event(event):
-            pass
+        elif event.type == KEYDOWN and event.key == K_ESCAPE:
+            self.ui_manager.confirm_quit()
         elif self.active_level:
-            if not self.player.handle_event(event):
+            if event.type == KEYDOWN and event.key == K_RETURN:
+                if self.paused:
+                    self._unpause()
+                else:
+                    self._pause()
+            elif not self.paused and not self.player.handle_event(event):
                 player_rects = self.player.get_absolute_collision_rects()
 
                 for eventbox in self.active_level.event_handlers:
@@ -149,6 +159,14 @@ class TheCureEngine(object):
                             break
 
         return True
+
+    def _pause(self):
+        self.paused = True
+        self.ui_manager.pause()
+
+    def _unpause(self):
+        self.paused = False
+        self.ui_manager.unpause()
 
     def _draw(self):
         if self.camera:
