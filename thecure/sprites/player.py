@@ -251,16 +251,19 @@ class Player(WalkingSprite):
 
             self.anim_timer.stop()
         else:
+            new_state = None
+
             if self.running and self.frame_state != 'running':
-                self.frame_state = 'running'
+                new_state = 'running'
             elif self.falling:
-                self.frame_state = 'falling'
+                new_state = 'falling'
             elif self.frame_state != 'walking':
-                self.frame_state = 'walking'
+                new_state = 'walking'
             else:
                 return
 
-            self.anim_timer.start()
+            if new_state:
+                self.start_animation(new_state)
 
         self.anim_frame = 0
         self.update_image()
