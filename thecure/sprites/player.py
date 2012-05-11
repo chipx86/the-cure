@@ -135,6 +135,7 @@ class Player(WalkingSprite):
         self.health_changed.emit()
         self.lives_changed.emit()
 
+        self.set_running(False)
         self.stop_moving()
         self._update_animation()
 
@@ -153,7 +154,7 @@ class Player(WalkingSprite):
                 self.move_direction(Direction.DOWN)
             elif event.key == K_c:
                 self.set_shooting(True)
-            elif event.key in (K_LSHIFT, K_RSHIFT):
+            elif event.key in (K_LSHIFT, K_RSHIFT) and self.can_run:
                 self.set_running(True)
             elif event.key == K_F4:
                 self.collidable = not self.collidable
@@ -216,9 +217,6 @@ class Player(WalkingSprite):
         return not isinstance(obj, Bullet) or obj.owner_sprite != self
 
     def set_running(self, running):
-        if not self.can_run:
-            return
-
         self.running = running
 
         if running:

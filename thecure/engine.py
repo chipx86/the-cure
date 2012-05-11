@@ -107,10 +107,10 @@ class TheCureEngine(object):
         if self.active_level:
             self.active_level.main_layer.remove(self.player)
 
+        self.player.reset()
         self.active_level = self.levels[num]
         self.active_level.reset()
         self.active_level.main_layer.add(self.player)
-        self.player.reset()
 
         self.surface = pygame.Surface(self.screen.get_size())
 
