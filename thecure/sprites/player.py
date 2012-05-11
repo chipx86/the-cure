@@ -108,12 +108,6 @@ class Player(WalkingSprite):
         self.lives_changed = Signal()
 
         # State
-        self.running = False
-        self.falling = False
-        self.shooting = False
-        self.invulnerable = False
-        self.can_run = True
-        self.allow_player_control = True
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
                                  cb=self.shoot,
                                  start_automatically=False)
@@ -128,6 +122,17 @@ class Player(WalkingSprite):
     def reset(self):
         self.health = self.MAX_HEALTH
         self.lives = self.MAX_LIVES
+        self.invulnerable = False
+        self.running = False
+        self.falling = False
+        self.shooting = False
+        self.can_run = True
+        self.collidable = True
+        self.allow_player_control = True
+
+        self.health_changed.emit()
+        self.lives_changed.emit()
+
         self._update_animation()
 
     def handle_event(self, event):
@@ -261,7 +266,7 @@ class Player(WalkingSprite):
         self.update_image()
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
-        if obj.LETHAL:
+        if obj.LETHAL and self.health > 0:
             if not self.invulnerable:
                 self.health -= 1
                 self.health_changed.emit()
@@ -280,11 +285,13 @@ class Player(WalkingSprite):
     def on_dead(self):
         self.lives -= 1
         self.lives_changed.emit()
-        self.stop_movement()
+        self.stop_moving()
+
+        engine = get_engine()
 
         if self.lives == 0:
-            self.engine.game_over()
+            self.die(engine.game_over)
         else:
             self.health = self.MAX_HEALTH
             self.health_changed.emit()
-            self.engine.dead()
+            engine.dead()

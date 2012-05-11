@@ -126,13 +126,15 @@ class ControlPanel(Widget):
         self.full_heart = load_spritesheet_frame('hearts', (0, 0), 1, 3)
         self.half_heart = load_spritesheet_frame('hearts', (0, 1), 1, 3)
         self.empty_heart = load_spritesheet_frame('hearts', (0, 2), 1, 3)
+        self.life_image = load_image('sprites/life')
 
         self.resize(self.ui_manager.size[0],
-                    self.full_heart.get_height() + 2 * self.PADDING)
+                    self.life_image.get_height() + 2 * self.PADDING)
         self.surface = pygame.Surface(self.rect.size).convert_alpha()
 
         player = self.ui_manager.engine.player
         player.health_changed.connect(self.render)
+        player.lives_changed.connect(self.render)
 
         self.render()
 
@@ -153,6 +155,16 @@ class ControlPanel(Widget):
             self.surface.blit(heart_image, (x, y))
 
             x += heart_width + self.IMAGE_SPACING
+
+        y = (self.rect.height - self.life_image.get_height()) / 2
+        life_width = self.life_image.get_width()
+        x += self.SIDE_SPACING
+
+        for i in range(Player.MAX_LIVES):
+            if player.lives > i:
+                self.surface.blit(self.life_image, (x, y))
+
+            x += life_width + self.IMAGE_SPACING
 
     def draw(self, surface):
         surface.blit(self.surface, self.rect.topleft)

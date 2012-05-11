@@ -8,6 +8,7 @@ from thecure.levels import get_levels
 from thecure.resources import get_font_filename
 from thecure.signals import Signal
 from thecure.sprites import Player
+from thecure.timer import Timer
 from thecure.ui import UIManager
 
 
@@ -69,6 +70,7 @@ class TheCureEngine(object):
         self.level_draw_area = None
 
         self.ui_manager = UIManager(self)
+        self.ui_manager.add_control_panel()
 
         # Debug flags
         self.debug_rects = False
@@ -87,12 +89,13 @@ class TheCureEngine(object):
         self.level_draw_area = pygame.Rect(0, 0, w, h)
 
     def _setup_game(self):
-        self.ui_manager.add_control_panel()
         self.camera = Camera(self)
         self.tick.clear()
 
         self.player.reset()
+        self.player.layer = None
 
+        self.active_level = None
         self.levels = [level(self) for level in get_levels()]
         self.switch_level(0)
 
@@ -102,7 +105,7 @@ class TheCureEngine(object):
         assert num < len(self.levels)
 
         if self.active_level:
-            self.active_level.main_layer.remove(player)
+            self.active_level.main_layer.remove(self.player)
 
         self.active_level = self.levels[num]
         self.active_level.reset()
@@ -116,6 +119,30 @@ class TheCureEngine(object):
         self.player.show()
 
         self.active_level.start()
+
+    def dead(self):
+        if self.player.lives == 1:
+            s = 'You have 1 more chance to get this right.'
+        else:
+            s = 'You have %d more chances to get this right.' % \
+                self.player.lives
+
+        widget = self.ui_manager.show_textbox(s)
+        self.paused = True
+        self.player.stop()
+        widget.closed.connect(self.restart_level)
+
+    def restart_level(self):
+        self.paused = False
+        self.player.move_to(*self.active_level.start_pos)
+        self.player.start()
+
+    def game_over(self):
+        widget = self.ui_manager.show_textbox(
+            ['You died. Maybe it was for the best.',
+             'Game over.'])
+        self.paused = True
+        widget.closed.connect(self._setup_game)
 
     def _mainloop(self):
         while 1:

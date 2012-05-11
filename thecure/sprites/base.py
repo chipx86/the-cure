@@ -252,13 +252,16 @@ class Sprite(BaseSprite):
             if self.health <= 0:
                 self.die()
 
-    def die(self):
+    def die(self, on_done):
         self.stop()
-        self.blink(self.DEATH_BLINK_MS, self._stop_and_die)
+        self.blink(self.DEATH_BLINK_MS, lambda: self._stop_and_die(on_done))
 
-    def _stop_and_die(self):
+    def _stop_and_die(self, on_done):
         self.dead.emit()
         self.remove()
+
+        if on_done:
+            on_done()
 
     def blink(self, ms, on_done):
         self.blink_count = 0
