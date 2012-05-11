@@ -121,12 +121,14 @@ class Overworld(Level):
             'dir': Direction.LEFT,
             'wander': True,
         },
+        # Market (right)
         {
             'name': 'girl1',
-            'pos': (5440, 6976),
+            'pos': (5440, 7040),
             'dir': Direction.DOWN,
             'wander': True,
         },
+        # Market (left)
         {
             'name': 'girl1',
             'pos': (4992, 6848),
