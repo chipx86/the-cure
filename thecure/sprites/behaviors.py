@@ -15,10 +15,16 @@ class WanderMixin(object):
     WANDER_KEY_NAME = 'wandering'
     WANDER_DISTANCE = 64 * 8
 
+    def __init__(self, *args, **kwargs):
+        super(WanderMixin, self).__init__(*args, **kwargs)
+        self.auto_wander = True
+        self._wander_timer = None
+
     def start(self):
         super(WanderMixin, self).start()
 
-        self.wander()
+        if self.auto_wander:
+            self.wander()
 
     def wander(self):
         self.set_home_pos()

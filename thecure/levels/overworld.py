@@ -102,6 +102,32 @@ class Overworld(Level):
         self.add_monologue('exit-lab',
                            '*cough* *cough* I can\'t believe I made it out '
                            'of there alive!')
+        self.add_monologue('my-house',
+            'My house seems to be okay. My wife would kill\n'
+            'me if something happened to it.')
+        self.add_monologue('kids',
+            'Even the kids are infected. What have I done...')
+        self.add_monologue('johnsons',
+            'This is where the Johnsons lived. I never really liked them.')
+        self.add_monologue('near-equipment',
+            'The equipment I ordered should be in this shipment somewhere.')
+        self.add_monologue('zombies',
+            'I\'ve always wondered why the movies never use the word "zombie."')
+        self.add_monologue('my-fault',
+            "It's all gone to hell. All of it. This town is done for. It's "
+            "all my fault.")
+
+        human = InfectedHuman('boy1')
+        human.move_to(4224, 5888)
+        self.main_layer.add(human)
+        human.set_direction(Direction.RIGHT)
+        human.auto_wander = False
+
+        human = InfectedHuman('girl1')
+        human.move_to(4416, 5888)
+        self.main_layer.add(human)
+        human.set_direction(Direction.LEFT)
+        human.auto_wander = False
 
         # Forest
         self.add_monologue('find-flower',
@@ -138,6 +164,11 @@ class Overworld(Level):
         self.add_monologue('near-graveyard',
                            'This place is spooky. I need to find this web '
                            'and get out fast.')
+
+        # Bridge
+        self.add_monologue('bridge-fixed',
+                           'Someone should probably fix that bridge when all '
+                           'this is over.')
 
         # Salt Lake
         self.add_monologue('near-salt-crystal',
