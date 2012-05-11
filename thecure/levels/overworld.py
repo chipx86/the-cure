@@ -145,6 +145,7 @@ class Overworld(Level):
                 mob.update_image()
                 mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
                 self.main_layer.add(mob)
+                self._allowed_spawn_bitmap[y][x] = 0
 
     def add_item(self, name, text):
         self.has_items[name] = False
