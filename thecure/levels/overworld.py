@@ -5,6 +5,7 @@ import pygame
 from thecure.levels.base import Level
 from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy, Snake, \
                             Slime, Tile
+from thecure.timer import Timer
 
 
 class Overworld(Level):
@@ -164,3 +165,10 @@ class Overworld(Level):
 
     def _on_lostboy_enter(self):
         self.lost_boy.fadeout()
+        self.lost_boy.dead.connect(self._on_lostboy_gone)
+
+    def _on_lostboy_gone(self):
+        Timer(ms=1000, one_shot=True, cb=lambda:
+            self.engine.ui_manager.show_monologue(
+                ['That was weird.',
+                 'I swear I heard music playing.']))

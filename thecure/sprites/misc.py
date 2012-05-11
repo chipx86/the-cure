@@ -18,13 +18,13 @@ class LostBoy(Sprite):
         self.direction = Direction.DOWN
 
     def fadeout(self):
-        self.frame_state = 'fading'
-        self.anim_timer.start()
+        self.start_animation('fading')
 
     def update_image(self):
         if self.frame_state == 'fading' and self.anim_frame == 5:
             self.anim_frame = 0
             self.frame_state = 'default'
+            self.dead.emit()
             self.remove()
             return
 
