@@ -71,7 +71,7 @@ class Bullet(Sprite):
 
 class Player(WalkingSprite):
     MAX_LIVES = 3
-    MAX_HEALTH = 3
+    MAX_HEALTH = 6
 
     SHOOT_MS = 500
     FALL_SPEED = 10
@@ -115,6 +115,7 @@ class Player(WalkingSprite):
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
                                  cb=self.shoot,
                                  start_automatically=False)
+        self.reset()
 
     def update_collision_rects(self):
         self.collision_rects = [

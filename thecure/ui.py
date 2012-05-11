@@ -1,7 +1,8 @@
 import pygame
 from pygame.locals import *
 
-from thecure.resources import get_font_filename, load_image
+from thecure.resources import get_font_filename, load_image, \
+                              load_spritesheet_frame
 from thecure.signals import Signal
 from thecure.sprites import Player
 from thecure.timer import Timer
@@ -114,6 +115,49 @@ class TextBox(Widget):
         surface.blit(self.surface, self.rect.topleft)
 
 
+class ControlPanel(Widget):
+    IMAGE_SPACING = 5
+    SIDE_SPACING = 15
+    PADDING = 5
+
+    def __init__(self, *args, **kwargs):
+        super(ControlPanel, self).__init__(*args, **kwargs)
+
+        self.full_heart = load_spritesheet_frame('hearts', (0, 0), 1, 3)
+        self.half_heart = load_spritesheet_frame('hearts', (0, 1), 1, 3)
+        self.empty_heart = load_spritesheet_frame('hearts', (0, 2), 1, 3)
+
+        self.resize(self.ui_manager.size[0],
+                    self.full_heart.get_height() + 2 * self.PADDING)
+        self.surface = pygame.Surface(self.rect.size).convert_alpha()
+
+        player = self.ui_manager.engine.player
+        player.health_changed.connect(self.render)
+
+        self.render()
+
+    def render(self):
+        self.surface.fill((0, 0, 0, 0))
+
+        heart_width = self.full_heart.get_width()
+        player = self.ui_manager.engine.player
+        x = self.SIDE_SPACING
+        y = (self.rect.height - self.full_heart.get_height()) / 2
+
+        for i in range(Player.MAX_HEALTH):
+            if player.health > i:
+                heart_image = self.full_heart
+            else:
+                heart_image = self.empty_heart
+
+            self.surface.blit(heart_image, (x, y))
+
+            x += heart_width + self.IMAGE_SPACING
+
+    def draw(self, surface):
+        surface.blit(self.surface, self.rect.topleft)
+
+
 class UIManager(object):
     SCREEN_PADDING = 20
     TEXTBOX_HEIGHT = 100
@@ -144,6 +188,10 @@ class UIManager(object):
 
         self.paused_textbox = None
         self.confirm_quit_box = None
+
+    def add_control_panel(self):
+        self.control_panel = ControlPanel(self)
+        self.control_panel.move_to(0, 0)
 
     def show_textbox(self, text, **kwargs):
         textbox = TextBox(self, text, **kwargs)

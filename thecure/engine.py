@@ -84,6 +84,7 @@ class TheCureEngine(object):
         self.level_draw_area = pygame.Rect(0, 0, w, h)
 
     def _setup_game(self):
+        self.ui_manager.add_control_panel()
         self.camera = Camera(self)
         self.tick.clear()
 
