@@ -183,6 +183,8 @@ class Overworld(Level):
 
         if all(self.has_items.values()):
             player.allow_player_control = False
+            player.velocity = (0, player.velocity[1])
+            player.set_direction(Direction.UP)
             Timer(ms=1000, one_shot=True,
                   cb=lambda: self.engine.switch_level(1))
         else:
