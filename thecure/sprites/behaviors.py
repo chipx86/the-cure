@@ -287,6 +287,12 @@ class ChaseMixin(object):
         self.stop_moving()
         self.wander()
 
+    def wander(self):
+        pass
+
+    def stop_wandering(self):
+        pass
+
     def show_exclamation(self):
         self.stop_wandering()
         self.stop_moving()

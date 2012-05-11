@@ -3,7 +3,7 @@ from pygame.locals import *
 
 from thecure import get_engine
 from thecure.signals import Signal
-from thecure.sprites.base import Direction, Sprite, WalkingSprite
+from thecure.sprites.base import Direction, Sprite, WalkingSprite, Human
 from thecure.timer import Timer
 
 
@@ -63,8 +63,9 @@ class Bullet(Sprite):
         if obj != self.owner_sprite:
             self.remove()
 
-            if obj.health > 0:
-                obj.damage(self.DAMAGE_VALUE)
+            if (obj.health > 0 and obj.damage(self.DAMAGE_VALUE) and
+                isinstance(obj, Human)):
+                self.owner_sprite.human_kill_count += 1
 
         return True
 
@@ -108,6 +109,7 @@ class Player(WalkingSprite):
         self.lives_changed = Signal()
 
         # State
+        self.human_kill_count = 0
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
                                  cb=self.shoot,
                                  start_automatically=False)

@@ -3,7 +3,7 @@ import math
 from pygame.locals import *
 
 from thecure import get_engine
-from thecure.sprites.base import Direction, Sprite, WalkingSprite
+from thecure.sprites.base import Direction, Sprite, WalkingSprite, Human
 from thecure.sprites.behaviors import ChaseMixin, WanderMixin, AttackLineMixin
 from thecure.timer import Timer
 
@@ -17,14 +17,16 @@ class Enemy(WalkingSprite):
             return True
 
 
-class InfectedHuman(WanderMixin, ChaseMixin, Enemy):
+class InfectedHuman(WanderMixin, ChaseMixin, Human, Enemy):
     MOVE_SPEED = 1
     CHASE_SPEED = 2
     WANDER_KEY_NAME = 'walking'
 
 
-class InfectedWife(InfectedHuman):
+class InfectedWife(ChaseMixin, Human, Enemy):
     MOVE_SPEED = 1
+    CHASE_SPEED = 1
+    WANDER_KEY_NAME = 'walking'
     NAME = 'infectedwife'
 
 

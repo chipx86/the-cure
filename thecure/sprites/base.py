@@ -251,6 +251,9 @@ class Sprite(BaseSprite):
 
             if self.health <= 0:
                 self.die()
+                return True
+
+        return False
 
     def die(self, on_done=None):
         self.stop()
@@ -417,3 +420,6 @@ class WalkingSprite(Sprite):
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
 
+
+class Human(object):
+    pass
