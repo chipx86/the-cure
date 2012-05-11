@@ -13,7 +13,8 @@ class Enemy(WalkingSprite):
 
 
 class InfectedHuman(WanderMixin, ChaseMixin, Enemy):
-    MOVE_SPEED = 2
+    MOVE_SPEED = 1
+    CHASE_SPEED = 2
     WANDER_KEY_NAME = 'walking'
 
 
