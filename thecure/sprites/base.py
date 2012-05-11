@@ -210,6 +210,7 @@ class Sprite(BaseSprite):
 
         self.can_move = True
         self.use_quadtrees = True
+        self.autoset_velocity = True
 
         self.frame_state = 'default'
         self.anim_frame = 0
@@ -317,7 +318,7 @@ class Sprite(BaseSprite):
         pass
 
     def update_velocity(self):
-        if not self.started:
+        if not self.started or not self.autoset_velocity:
             return
 
         x, y = {
