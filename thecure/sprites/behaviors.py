@@ -17,11 +17,9 @@ class WanderMixin(object):
         super(WanderMixin, self).start()
 
         self.wander()
-        self.set_home_pos()
 
     def wander(self):
-        self.frame_state = self.WANDER_KEY_NAME
-        self.anim_timer.start()
+        self.set_home_pos()
 
         self._generate_direction()
 
@@ -30,8 +28,9 @@ class WanderMixin(object):
                                    cb=self._on_wander_tick)
 
     def stop_wandering(self):
-        self._wander_timer.stop()
-        self._wander_timer = None
+        if self._wander_timer:
+            self._wander_timer.stop()
+            self._wander_timer = None
 
     def set_home_pos(self):
         self.home_pos = self.rect.center
@@ -64,13 +63,18 @@ class WanderMixin(object):
             self.velocity = (self.velocity[0], -self.velocity[1])
             turning_back = True
 
-        if not turning_back:
+        if turning_back:
+            self.recompute_direction()
+        else:
             if random.random() <= self.CHANGE_DIR_CHANCE:
                 self._generate_direction()
 
             if random.random() <= self.PAUSE_CHANCE:
                 self._pause_wander = True
-                self.velocity = (0, 0)
+                self.stop_moving()
+            elif self.frame_state != self.WANDER_KEY_NAME:
+                self.start_animation(self.WANDER_KEY_NAME)
+
 
 
 class AttackLineMixin(object):
