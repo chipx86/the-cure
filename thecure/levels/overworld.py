@@ -127,7 +127,30 @@ class Overworld(Level):
         self.connect_eventbox_enter('lostboy-fadeout', self._on_lostboy_enter,
                                     only_once=True)
 
+        # Swamp
+        self.add_monologue('snakes-everywhere',
+                           'Snakes... Why did it have to be snakes...')
+        self.add_monologue('filty-boots',
+                           'My boots are pretty much ruined now. First world '
+                           'problems.')
+
+        # Graveyard
+        self.add_monologue('near-graveyard',
+                           'This place is spooky. I need to find this web '
+                           'and get out fast.')
+
+        # Salt Lake
+        self.add_monologue('near-salt-crystal',
+                           'This is the salt lake. The crystal should be '
+                           'nearby.')
+
         # Mountain
+        self.add_monologue('climbing-mountain',
+                           'This is a steep climb. I hope Laura made it '
+                           'safely.')
+        self.add_monologue('near-cliff',
+                           'Almost there.')
+
         self.connect_eventbox_enter('to-cliff', self._on_to_cliff)
 
         # Spawn the mobs
