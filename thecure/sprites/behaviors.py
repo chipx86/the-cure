@@ -1,6 +1,8 @@
 import math
 import random
 
+import pygame
+
 from thecure import get_engine
 from thecure.sprites import Direction, Sprite
 from thecure.timer import Timer
@@ -96,13 +98,9 @@ class AttackLineMixin(object):
             engine = get_engine()
             player = engine.player
 
-            distance_x = abs(player.rect.x - self.rect.x)
-            distance_y = abs(player.rect.y - self.rect.y)
-
             if (not self.attacking and
                 self.can_attack and
-                distance_x <= self.ATTACK_DISTANCE and
-                distance_y <= self.ATTACK_DISTANCE):
+                self._can_see_player()):
                 self.stop_wandering()
                 self.attacking = True
                 self.autoset_velocity = False
@@ -110,22 +108,11 @@ class AttackLineMixin(object):
                 self.attack_start_pos = self.rect.topleft
                 self.attack_dest_pos = player.rect.center
 
-                delta_x = self.attack_dest_pos[0] - self.attack_start_pos[0]
-                delta_y = self.attack_dest_pos[1] - self.attack_start_pos[1]
-
-                dist = math.sqrt(delta_x * delta_x + delta_y * delta_y)
-                self.velocity = ((delta_x * (1.0 / dist) * self.ATTACK_SPEED),
-                                 (delta_y * (1.0 / dist) * self.ATTACK_SPEED))
-
-                self.attack_ticks = 1
-
-                if self.velocity[0] == 0:
-                    self.max_attack_ticks = int(delta_y / self.velocity[1])
-                else:
-                    self.max_attack_ticks = int(delta_x / self.velocity[0])
+                self.velocity, self.max_attack_ticks = self._get_attack_data()
 
                 # Let it go a bit longer than that
                 self.max_attack_ticks += self.ATTACK_TICKS_PAD
+                self.attack_ticks = 1
 
                 self._update_attack_pos()
             elif self.attacking:
@@ -148,13 +135,59 @@ class AttackLineMixin(object):
 
         Timer(ms=self.POST_ATTACK_MS, cb=self._allow_attacking, one_shot=True)
 
+    def _can_see_player(self):
+        player = get_engine().player
+
+        distance_x = abs(player.rect.x - self.rect.x)
+        distance_y = abs(player.rect.y - self.rect.y)
+
+        if (distance_x <= self.ATTACK_DISTANCE and
+            distance_y <= self.ATTACK_DISTANCE):
+            # See if there's anything in the way. We'll simulate an attack.
+
+            start_pos = self.rect.topleft
+            velocity, max_attack_ticks = self._get_attack_data()
+
+            for i in xrange(1, max_attack_ticks - 1):
+                pos = self._get_attack_position(start_pos, velocity, i)
+                rect = pygame.Rect(pos, self.rect.size)
+
+                for sprite in self.layer.iterate_in_rect(rect):
+                    if sprite != self and sprite != player:
+                        return False
+
+            return True
+
+        return False
+
     def _update_attack_pos(self):
-        self.move_to(int(self.attack_start_pos[0] +
-                         (self.attack_ticks * self.velocity[0])),
-                     int(self.attack_start_pos[1] +
-                         (self.attack_ticks * self.velocity[1])),
-                     check_collisions=True)
+        self.move_to(*self._get_attack_position(self.attack_start_pos,
+                                                self.velocity,
+                                                self.attack_ticks))
         self.recompute_direction()
+
+    def _get_attack_data(self):
+        player = get_engine().player
+        delta_x = player.rect.center[0] - self.rect.topleft[0]
+        delta_y = player.rect.center[1] - self.rect.topleft[1]
+        dist = math.sqrt(delta_x * delta_x + delta_y * delta_y)
+
+        if dist == 0:
+            return (0, 0), 0
+
+        velocity = ((delta_x * (1.0 / dist) * self.ATTACK_SPEED),
+                    (delta_y * (1.0 / dist) * self.ATTACK_SPEED))
+
+        if velocity[0] == 0:
+            max_attack_ticks = int(delta_y / velocity[1])
+        else:
+            max_attack_ticks = int(delta_x / velocity[0])
+
+        return velocity, max_attack_ticks
+
+    def _get_attack_position(self, start_pos, velocity, cur_tick):
+        return (int(start_pos[0] + (cur_tick * velocity[0])),
+                int(start_pos[1] + (cur_tick * velocity[1])))
 
     def _allow_attacking(self):
         self.can_attack = True
