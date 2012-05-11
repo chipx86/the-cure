@@ -34,14 +34,20 @@ class Widget(object):
 class TextBox(Widget):
     BG_COLOR = (0, 0, 0, 190)
     BORDER_COLOR = (255, 255, 255, 120)
+    TEXT_COLOR = (255, 255, 255)
     BORDER_WIDTH = 1
 
-    def __init__(self, ui_manager, text, line_spacing=10, stay_open=False):
+    def __init__(self, ui_manager, text, line_spacing=10, stay_open=False,
+                 bg_color=BG_COLOR, border_color=BORDER_COLOR,
+                 text_color=TEXT_COLOR):
         super(TextBox, self).__init__(ui_manager)
         self.text = text
         self.line_spacing = line_spacing
         self.surface = None
         self.stay_open = stay_open
+        self.bg_color = bg_color
+        self.border_color = border_color
+        self.text_color = text_color
 
     def _render_text(self):
         if isinstance(self.text, list):
@@ -70,7 +76,7 @@ class TextBox(Widget):
                 attrs, text = column
                 font = attrs.get('font', self.ui_manager.font)
 
-                text_surface = font.render(text, True, (255, 255, 255))
+                text_surface = font.render(text, True, self.text_color)
                 column_surfaces.append((attrs, text_surface))
                 column_height = text_surface.get_height()
 
@@ -106,8 +112,8 @@ class TextBox(Widget):
     def draw(self, surface):
         if not self.surface:
             self.surface = pygame.Surface(self.rect.size).convert_alpha()
-            self.surface.fill(self.BG_COLOR)
-            pygame.draw.rect(self.surface, self.BORDER_COLOR,
+            self.surface.fill(self.bg_color)
+            pygame.draw.rect(self.surface, self.border_color,
                              (0, 0, self.rect.width, self.rect.height),
                              self.BORDER_WIDTH)
             self._render_text()
@@ -214,7 +220,8 @@ class UIManager(object):
                         self.SCREEN_PADDING)
         return textbox
 
-    def show_monologue(self, text, timeout_ms=None, on_done=None, **kwargs):
+    def show_monologue(self, text, timeout_ms=None, on_done=None,
+                       y_offset=MONOLOGUE_Y_OFFSET, actor=None, **kwargs):
         def _next_monologue():
             self.close(self.active_monologue)
 
@@ -226,9 +233,7 @@ class UIManager(object):
         if not isinstance(text, list):
             text = [text]
 
-        if self.active_monologue:
-            self.monologue_timer.stop()
-            self.close(self.active_monologue)
+        self.close_monologues()
 
         lines = text[0].split('\n')
         textbox = TextBox(self, lines, stay_open=True, **kwargs)
@@ -240,15 +245,45 @@ class UIManager(object):
         clip_rect = self.engine.camera.rect
         offset = (-clip_rect.x, -clip_rect.y)
 
+        if actor is None:
+            actor = self.engine.player
+
         textbox.move_to(self.MONOLOGUE_X,
-                        self.engine.player.rect.move(offset).bottom +
-                        self.MONOLOGUE_Y_OFFSET)
+                        actor.rect.move(offset).bottom + y_offset)
 
         self.monologue_timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
                                      cb=_next_monologue,
                                      one_shot=True)
 
         return textbox
+
+    def close_monologues(self):
+        if self.active_monologue:
+            self.monologue_timer.stop()
+            self.close(self.active_monologue)
+
+    def show_dialogue(self, actors, lines, timeout_ms=None, on_done=None,
+                      **kwargs):
+        def _next_dialogue():
+            self.close(self.active_monologue)
+
+            if len(lines) > 1:
+                self.show_dialogue(actors, lines[1:], timeout_ms,
+                                   on_done, **kwargs)
+            elif on_done:
+                on_done()
+
+        person, text = lines[0]
+
+        if person == 'player':
+            self.show_monologue(text, timeout_ms, _next_dialogue)
+        else:
+            self.show_monologue(text, timeout_ms, _next_dialogue,
+                                actor=actors[person],
+                                y_offset=-3.5 * self.MONOLOGUE_Y_OFFSET,
+                                bg_color=(232, 174, 174),
+                                text_color=(0, 0, 0),
+                                border_color=(0, 0, 0))
 
     def close(self, widget):
         try:

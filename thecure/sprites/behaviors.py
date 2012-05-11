@@ -237,7 +237,7 @@ class ChaseMixin(object):
                     if self.SHOW_EXCLAMATION:
                         # They haven't noticed the player before, but they
                         # do now!
-                        self.show_exclamation()
+                        self.show_exclamation(on_done=self.start_following)
                         return
                     else:
                         self.start_following()
@@ -293,21 +293,24 @@ class ChaseMixin(object):
     def stop_wandering(self):
         pass
 
-    def show_exclamation(self):
+    def show_exclamation(self, exclamation_type='exclamation', on_done=None):
         self.stop_wandering()
         self.stop_moving()
 
-        self.exclamation = Sprite('exclamation')
+        self.exclamation = Sprite(exclamation_type)
         self.layer.add(self.exclamation)
         self.exclamation.move_to(
             self.rect.centerx - self.exclamation.rect.width / 2,
             self.rect.y - self.exclamation.rect.height)
         self.exclamation.start()
 
-        Timer(ms=self.EXCLAMATION_MS, cb=self._on_exclamation_done,
+        Timer(ms=self.EXCLAMATION_MS,
+              cb=lambda: self._on_exclamation_done(on_done),
               one_shot=True)
 
-    def _on_exclamation_done(self):
+    def _on_exclamation_done(self, on_done):
         self.exclamation.remove()
         self.exclamation = None
-        self.start_following()
+
+        if on_done:
+            on_done()

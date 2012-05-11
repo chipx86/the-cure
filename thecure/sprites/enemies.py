@@ -23,13 +23,6 @@ class InfectedHuman(WanderMixin, ChaseMixin, Human, Enemy):
     WANDER_KEY_NAME = 'walking'
 
 
-class InfectedWife(ChaseMixin, Human, Enemy):
-    MOVE_SPEED = 1
-    CHASE_SPEED = 1
-    WANDER_KEY_NAME = 'walking'
-    NAME = 'infectedwife'
-
-
 class Snake(WanderMixin, AttackLineMixin, Enemy):
     NAME = 'snake'
     MOVE_SPEED = 1

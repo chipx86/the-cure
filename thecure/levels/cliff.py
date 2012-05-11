@@ -1,5 +1,5 @@
 from thecure.levels.base import Level
-from thecure.sprites import Direction, InfectedWife, Sprite
+from thecure.sprites import Direction, Wife, Sprite
 from thecure.timer import Timer
 
 
@@ -14,10 +14,11 @@ class Cliff(Level):
 
         self.engine.player.can_run = False
 
-        self.wife = InfectedWife()
+        self.wife = Wife()
         self.wife.move_to(*self.eventboxes['infected-wife'].rects[0].topleft)
         self.main_layer.add(self.wife)
         self.wife.dead.connect(self._on_wife_dead)
+        self.wife.transitioned.connect(self._on_wife_transitioned)
 
         self.add_monologue('finding-wife',
                            'This is where I told Laura to meet me. She must '
@@ -27,6 +28,33 @@ class Cliff(Level):
             'NO! No no no, God no.. My wife...',
             "What is she doing? Is she going to kill me?! What do I do?!!",
         ])
+
+    def _on_wife_transitioned(self):
+        self.engine.ui_manager.show_dialogue(
+            actors={
+                'player': self.engine.player,
+                'wife': self.wife,
+            },
+            lines=[
+                ('wife', 'Honey, you look sick. Are you okay?'),
+                ('player', "Laura, I.. I don't understand. You were infected!"),
+                ('wife', "Infected? I'm fine, but I've been worrying about "
+                         "you all day."),
+                ('wife', ["When you left for work you talked about testing "
+                          "a new\n"
+                          "breakthrough cure for the cold."]),
+                ('wife', ["Then you called, mumbling to meet me up here."]),
+                ('player', "But the lab explosion. The mutation. "
+                           "The hallucinations.."),
+                ('wife', "You're burning up. I don't think you're remembering "
+                         "things clearly."),
+                ('player', "It must just be me. I must have the infection.\n"
+                           "But I have what I need to cure it."),
+            ],
+            on_done=self._complete_cure)
+
+    def _after_dialogue(self):
+        self.complete_ure
 
     def _on_wife_dead(self):
         self.killed_wife = True
@@ -39,7 +67,7 @@ class Cliff(Level):
             "Too many other people will suffer if I don't complete this cure."
         ], on_done=self._complete_cure)
 
-    def _complete_cure(self):
+    def _complete_cure(self, on_done=None):
         player = self.engine.player
         player.allow_player_control = False
         player.velocity = (0, 0)
@@ -90,36 +118,47 @@ class Cliff(Level):
 
     def _on_ingredients_processed(self):
         self.engine.player.set_direction(Direction.UP)
-        self.engine.ui_manager.show_monologue(
-            "I'll test it on myself to make sure there aren't any side "
-            "effects...",
-            on_done=self._use_cure)
+
+        if self.killed_wife:
+            s = "I'll test it on myself to make sure there aren't any side " \
+                "effects...",
+        else:
+            s = 'Here goes nothing'
+
+        self.engine.ui_manager.show_monologue(s, on_done=self._use_cure)
 
     def _use_cure(self):
         # TODO: Some sort of visual effect.
         self.engine.player.set_direction(Direction.DOWN)
-        lines = [
-            'I...\n...',
-
-            'I was infected. I remember now. It was only me.\n'
-            'The infection was never even airborne.',
-        ]
 
         if self.killed_wife:
+            lines = [
+                'I...\n...',
+
+                'I was infected. I remember now. It was only me.\n'
+                'The infection was never even airborne.',
+            ]
+
             lines += [
                 'Oh God! I killed Laura! She was safe and fine and I '
                 'KILLED her!',
                 "I truly am a monster. There's nothing left to do but jump.",
             ]
+        else:
+            lines = "I can think clearly now. I remember everything.\n" \
+                    "I've been hallucinating."
 
         self.engine.ui_manager.show_monologue(lines, on_done=self._after_cure)
 
     def _after_cure(self):
-        self.engine.player.allow_player_control = True
-        self.engine.player.start()
-        self.allow_jump = True
-        self.connect_eventbox_enter('jump-off-cliff',
-                                    self._begin_jump_off_cliff, True)
+        if self.killed_wife:
+            self.engine.player.allow_player_control = True
+            self.engine.player.start()
+            self.allow_jump = True
+            self.connect_eventbox_enter('jump-off-cliff',
+                                        self._begin_jump_off_cliff, True)
+        else:
+            self._finale()
 
     def _begin_jump_off_cliff(self):
         player = self.engine.player
@@ -144,29 +183,52 @@ class Cliff(Level):
             self.layer_map['fg'].add(player)
             player.fall()
             self.jumped = True
-            Timer(ms=5000, cb=self._on_splat, one_shot=True)
+            Timer(ms=5000, cb=self._finale, one_shot=True)
         elif not self.pending_jump and player.rect.right >= jump_spot.x:
             player.stop_moving()
             self.pending_jump = True
             Timer(700, player.update_velocity, one_shot=True)
 
-    def _on_splat(self):
+    def _finale(self):
         player = self.engine.player
         player.stop_moving()
 
-        kill_count = player.human_kill_count - 1
+        kill_count = player.human_kill_count
 
-        if kill_count == 1:
-            s = ['Your wife is dead, by your own hand. And by the way, you',
-                 'killed one other harmless victim. You monster.']
-        elif kill_count > 1:
-            s = ['Your wife is dead, by your own hand. And by the way, you',
-                 'killed %s other harmless victims. You monster.' % \
-                 kill_count]
+        if self.killed_wife:
+            kill_count -= 1
+
+            if kill_count == 1:
+                s = ['Your wife is dead, by your own hand. And by the way, you',
+                     'killed one other harmless victim. You monster.']
+            elif kill_count > 1:
+                s = ['Your wife is dead, by your own hand. And by the way, you',
+                     'killed %s other harmless victims. You monster.' % \
+                     kill_count]
+            else:
+                s = ['Your wife is dead, by your own hand. You monster.']
+
+            s += ['Maybe you should have done things differently.']
         else:
-            s = ['Your wife is dead, by your own hand. You monster.']
+            if kill_count == 0:
+                s = ["Your wife is safe, the town is safe, and you didn't "
+                     "kill anybody. Good job!",
+                     "Reality is only what you perceive it to be. How do you "
+                     "know what's even real?",
+                     "Kids, don't do drugs."]
+            else:
+                if kill_count == 1:
+                    s = ['Your wife is safe, but in your infected state, you '
+                         'killed an innocent person.']
+                elif kill_count > 1:
+                    s = ['Your wife is safe, but in your infected state, you '
+                         'killed %s innocent people.' % kill_count]
 
-        s += ['Maybe you should have done things differently.']
+                s += [
+                     'You were later sentenced to prison for manslaughter. '
+                     'Shortly after, your wife left you.',
+                     'If only you had made different choices.',
+                ]
 
         widget = self.engine.ui_manager.show_textbox(s)
         widget.closed.connect(self.engine._setup_game)
