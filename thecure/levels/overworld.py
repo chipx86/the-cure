@@ -140,9 +140,10 @@ class Overworld(Level):
 
                 mob_cls = random.choice(mob_classes)
                 mob = mob_cls()
+                mob.direction = Direction.random()
+                mob.update_image()
                 mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
                 self.main_layer.add(mob)
-                mob.set_direction(Direction.random())
 
     def add_item(self, name, text):
         self.has_items[name] = False
