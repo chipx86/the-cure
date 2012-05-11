@@ -136,6 +136,7 @@ class UIManager(object):
         self.timers = []
 
         self.active_monologue = None
+        self.monologue_timer = None
 
         self.default_font_file = get_font_filename()
         self.font = pygame.font.Font(self.default_font_file, 20)
@@ -166,6 +167,7 @@ class UIManager(object):
             text = [text]
 
         if self.active_monologue:
+            self.monologue_timer.stop()
             self.close(self.active_monologue)
 
         lines = text[0].split('\n')
@@ -182,9 +184,9 @@ class UIManager(object):
                         self.engine.player.rect.move(offset).bottom +
                         self.MONOLOGUE_Y_OFFSET)
 
-        timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
-                      cb=_next_monologue,
-                      one_shot=True)
+        self.monologue_timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
+                                     cb=_next_monologue,
+                                     one_shot=True)
 
         return textbox
 
