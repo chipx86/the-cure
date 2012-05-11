@@ -168,6 +168,8 @@ class AttackLineMixin(object):
 
 class ChaseMixin(object):
     APPROACH_DISTANCE = 300
+    CHASE_SPEED = 3
+    STOP_FOLLOWING_DISTANCE = 1000
     SHOW_EXCLAMATION = True
     EXCLAMATION_MS = 700
 
@@ -187,6 +189,10 @@ class ChaseMixin(object):
             distance_x = abs(player.rect.x - self.rect.x)
             distance_y = abs(player.rect.y - self.rect.y)
 
+            if (self.following and
+                (distance_x >= self.STOP_FOLLOWING_DISTANCE or
+                 distance_y >= self.STOP_FOLLOWING_DISTANCE)):
+                self.stop_following()
             if (self.following or
                 (distance_x <= self.APPROACH_DISTANCE and
                  distance_y <= self.APPROACH_DISTANCE and
@@ -198,8 +204,9 @@ class ChaseMixin(object):
                         # They haven't noticed the player before, but they
                         # do now!
                         self.show_exclamation()
+                        return
                     else:
-                        self.following = True
+                        self.start_following()
 
                 x_dir = None
                 y_dir = None
@@ -222,8 +229,7 @@ class ChaseMixin(object):
                 else:
                     y = 0
 
-                if self.following:
-                    self.velocity = (x * self.MOVE_SPEED, y * self.MOVE_SPEED)
+                self.velocity = (x * self.CHASE_SPEED, y * self.CHASE_SPEED)
 
                 if distance_x > distance_y:
                     self.direction = x_dir
@@ -232,16 +238,26 @@ class ChaseMixin(object):
 
                 self.update_image()
 
-                if self.velocity != (0, 0):
-                    self.frame_state = 'walking'
-                    self.anim_timer.start()
-                else:
-                    self.frame_state = 'default'
-                    self.anim_timer.stop()
+                return
+
+        super(ChaseMixin, self).tick()
+
+    def start_following(self):
+        print 'Start following'
+        self.following = True
+        self.stop_wandering()
+        self.velocity = (0, 0)
+        self.start_animation('walking')
+
+    def stop_following(self):
+        print 'Stop following'
+        self.following = False
+        self.stop_moving()
+        self.wander()
 
     def show_exclamation(self):
         self.stop_wandering()
-        self.stop()
+        self.stop_moving()
 
         self.exclamation = Sprite('exclamation')
         self.layer.add(self.exclamation)
@@ -256,5 +272,4 @@ class ChaseMixin(object):
     def _on_exclamation_done(self):
         self.exclamation.remove()
         self.exclamation = None
-        self.following = True
-        self.start()
+        self.start_following()
