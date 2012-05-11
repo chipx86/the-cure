@@ -1,3 +1,6 @@
+import pygame
+
+from thecure.effects import ScreenFadeEffect, ScreenFlashEffect
 from thecure.levels.base import Level
 from thecure.sprites import Direction, Wife, Sprite
 from thecure.timer import Timer
@@ -131,7 +134,13 @@ class Cliff(Level):
         self.engine.ui_manager.show_monologue(s, on_done=self._use_cure)
 
     def _use_cure(self):
-        # TODO: Some sort of visual effect.
+        self.effect = ScreenFlashEffect(self.layer_map['fg2'],
+                                        self.engine.camera.rect)
+        self.effect.stopped.connect(self._after_flash)
+        self.effect.start()
+
+    def _after_flash(self):
+        self.effect = None
         self.engine.player.set_direction(Direction.DOWN)
 
         if self.killed_wife:
@@ -193,6 +202,10 @@ class Cliff(Level):
             Timer(700, player.update_velocity, one_shot=True)
 
     def _finale(self):
+        self.effect = ScreenFadeEffect(self.layer_map['fg2'],
+                                       self.engine.camera.rect)
+        self.effect.start()
+
         player = self.engine.player
         player.stop_moving()
 

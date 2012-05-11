@@ -30,6 +30,7 @@ class Level(object):
         self._filename_map = []
         self._tile_map = []
         self._allowed_spawn_bitmap = []
+        self.effect = None
 
         self.load_level()
 
@@ -237,6 +238,9 @@ class Level(object):
 
                     if sprite.dirty == 1:
                         sprite.dirty = 0
+
+        if self.effect:
+            screen.blit(self.effect.image, (0, 0))
 
         if self.engine.debug_rects:
             for sprite in self.main_layer.iterate_in_rect(clip_rect):
