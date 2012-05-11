@@ -48,7 +48,7 @@ class Camera(object):
 class TheCureEngine(object):
     FPS = 30
     DEBUG_COLOR = (255, 0, 0)
-    DEBUG_POS = (30, 10)
+    DEBUG_POS = (30, 50)
 
     def __init__(self, screen):
         set_engine(self)
