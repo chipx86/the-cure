@@ -11,11 +11,13 @@ class WanderMixin(object):
     PAUSE_CHANCE = 0.1
     CHANGE_DIR_CHANCE = 0.3
     WANDER_KEY_NAME = 'wandering'
+    WANDER_DISTANCE = 64 * 8
 
     def start(self):
         super(WanderMixin, self).start()
 
         self.wander()
+        self.set_home_pos()
 
     def wander(self):
         self.frame_state = self.WANDER_KEY_NAME
@@ -30,6 +32,9 @@ class WanderMixin(object):
     def stop_wandering(self):
         self._wander_timer.stop()
         self._wander_timer = None
+
+    def set_home_pos(self):
+        self.home_pos = self.rect.center
 
     def _generate_direction(self):
         self.velocity = (0, 0)
@@ -46,12 +51,26 @@ class WanderMixin(object):
             self._pause_wander = False
             return
 
-        if random.random() <= self.CHANGE_DIR_CHANCE:
-            self._generate_direction()
+        dist_x = self.home_pos[0] - self.rect.centerx
+        dist_y = self.home_pos[1] - self.rect.centery
 
-        if random.random() <= self.PAUSE_CHANCE:
-            self._pause_wander = True
-            self.velocity = (0, 0)
+        turning_back = False
+
+        if abs(dist_x) >= self.WANDER_DISTANCE / 2:
+            self.velocity = (-self.velocity[0], self.velocity[1])
+            turning_back = True
+
+        if abs(dist_y) >= self.WANDER_DISTANCE / 2:
+            self.velocity = (self.velocity[0], -self.velocity[1])
+            turning_back = True
+
+        if not turning_back:
+            if random.random() <= self.CHANGE_DIR_CHANCE:
+                self._generate_direction()
+
+            if random.random() <= self.PAUSE_CHANCE:
+                self._pause_wander = True
+                self.velocity = (0, 0)
 
 
 class AttackLineMixin(object):
