@@ -201,8 +201,6 @@ class Level(object):
 
                 del self._loaded_tiles[coord]
 
-            del self._loaded_tiles[coord]
-
     def _get_chunk_ranges(self, rect):
         width_divisor = float(Tile.WIDTH * self.CHUNK_SIZE[0])
         height_divisor = float(Tile.HEIGHT * self.CHUNK_SIZE[1])
