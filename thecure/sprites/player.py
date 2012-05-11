@@ -144,6 +144,8 @@ class Player(WalkingSprite):
                 self.set_shooting(True)
             elif event.key in (K_LSHIFT, K_RSHIFT):
                 self.set_running(True)
+            elif event.key == K_F4:
+                self.collidable = not self.collidable
         elif event.type == KEYUP:
             if event.key == K_RIGHT:
                 self.stop_moving_direction(Direction.RIGHT)
