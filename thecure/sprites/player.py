@@ -133,6 +133,7 @@ class Player(WalkingSprite):
         self.health_changed.emit()
         self.lives_changed.emit()
 
+        self.stop_moving()
         self._update_animation()
 
     def handle_event(self, event):

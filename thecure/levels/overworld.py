@@ -126,6 +126,10 @@ class Overworld(Level):
 
         self.connect_eventbox_enter('lostboy-fadeout', self._on_lostboy_enter)
 
+        # Mountain
+        self.connect_eventbox_enter('to-cliff', self._on_to_cliff)
+
+        # Spawn the mobs
         for region in self.MOB_SPAWN_REGIONS:
             mob_count = random.randint(region['min'], region['max'])
             rect = region['rect']
@@ -173,3 +177,18 @@ class Overworld(Level):
             self.engine.ui_manager.show_monologue(
                 ['That was weird.',
                  'I swear I heard music playing.']))
+
+    def _on_to_cliff(self):
+        player = self.engine.player
+
+        if all(self.has_items.values()):
+            player.allow_player_control = False
+            Timer(ms=1000, one_shot=True,
+                  cb=lambda: self.engine.switch_level(1))
+        else:
+            self.engine.ui_manager.show_monologue(
+                "I'm still missing some of the ingredients.")
+
+            player.set_direction(Direction.DOWN)
+            player.stop_moving()
+            player.move_by(0, 10)
