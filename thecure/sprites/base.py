@@ -223,11 +223,7 @@ class Sprite(BaseSprite):
         self.started = True
 
     def stop(self):
-        self.velocity = (0, 0)
-
-        if self.anim_timer:
-            self.anim_timer.stop()
-
+        self.stop_moving()
         self.started = False
 
     def show(self):
@@ -303,6 +299,26 @@ class Sprite(BaseSprite):
             self.direction = direction
             self.update_velocity()
             self.update_image()
+
+    def start_animation(self, name):
+        self.frame_state = name
+        self.anim_frame = 0
+
+        if self.anim_timer:
+            self.anim_timer.stop()
+
+        self.anim_timer = Timer(ms=self.ANIM_MS,
+                                cb=self._on_anim_tick)
+
+    def stop_moving(self):
+        self.velocity = (0, 0)
+        self.frame_state = 'default'
+        self.anim_frame = 0
+
+        if self.anim_timer:
+            self.anim_timer.stop()
+
+        self.anim_timer = None
 
     def recompute_direction(self):
         if abs(self.velocity[0]) > abs(self.velocity[1]):
