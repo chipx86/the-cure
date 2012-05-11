@@ -172,7 +172,7 @@ class ControlPanel(Widget):
 
 class UIManager(object):
     SCREEN_PADDING = 20
-    TEXTBOX_HEIGHT = 100
+    TEXTBOX_HEIGHT = 120
     CONTROL_PANEL_HEIGHT = 40
 
     MONOLOGUE_X = 250
