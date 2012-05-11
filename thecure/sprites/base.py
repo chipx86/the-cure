@@ -75,7 +75,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         allow_move = True
 
         for obj, self_rect, obj_rect in self.get_collisions():
-            obj.handle_collision(self, obj_rect, dx, dy)
+            obj.on_collision(dx, dy, self, obj_rect, self_rect)
 
             if not self.on_collision(dx, dy, obj, self_rect, obj_rect):
                 allow_move = False
@@ -176,6 +176,7 @@ class Sprite(BaseSprite):
     ANIM_MS = 150
     DEATH_BLINK_MS = 250
     MAX_BLINKS = 4
+    LETHAL = False
 
     SPRITESHEET_ROWS = 1
     SPRITESHEET_COLS = 1
@@ -253,12 +254,18 @@ class Sprite(BaseSprite):
 
     def die(self):
         self.stop()
+        self.blink(self.DEATH_BLINK_MS, self._stop_and_die)
+
+    def _stop_and_die(self):
+        self.dead.emit()
+        self.remove()
+
+    def blink(self, ms, on_done):
         self.blink_count = 0
         self.visible = 0
-        self.death_timer = Timer(ms=self.DEATH_BLINK_MS,
-                                 cb=self._on_blinked)
+        self.blink_timer = Timer(ms=ms, cb=lambda: self._on_blinked(on_done))
 
-    def _on_blinked(self):
+    def _on_blinked(self, on_done):
         self.blink_count += 1
 
         if self.visible:
@@ -268,9 +275,10 @@ class Sprite(BaseSprite):
 
         if self.blink_count == self.MAX_BLINKS:
             self.visible = 1
-            self.death_timer.stop()
-            self.dead.emit()
-            self.remove()
+            self.blink_timer.stop()
+
+            if on_done:
+                on_done()
 
     def remove(self):
         self.stop()

@@ -10,6 +10,11 @@ from thecure.timer import Timer
 
 class Enemy(WalkingSprite):
     DEFAULT_HEALTH = 10
+    LETHAL = True
+
+    def on_collision(self, dx, dy, obj, self_rect, obj_rect):
+        if obj.name == 'player':
+            return True
 
 
 class InfectedHuman(WanderMixin, ChaseMixin, Enemy):

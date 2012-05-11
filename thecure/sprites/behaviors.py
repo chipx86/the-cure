@@ -163,7 +163,8 @@ class AttackLineMixin(object):
     def _update_attack_pos(self):
         self.move_to(*self._get_attack_position(self.attack_start_pos,
                                                 self.velocity,
-                                                self.attack_ticks))
+                                                self.attack_ticks),
+                     check_collisions=True)
         self.recompute_direction()
 
     def _get_attack_data(self):

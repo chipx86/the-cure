@@ -75,6 +75,7 @@ class Player(WalkingSprite):
 
     SHOOT_MS = 500
     FALL_SPEED = 10
+    HURT_BLINK_MS = 250
 
     SPRITESHEET_FRAMES = {
         Direction.DOWN: dict(
@@ -110,6 +111,7 @@ class Player(WalkingSprite):
         self.running = False
         self.falling = False
         self.shooting = False
+        self.invulnerable = False
         self.can_run = True
         self.allow_player_control = True
         self.shoot_timer = Timer(ms=self.SHOOT_MS,
@@ -257,3 +259,32 @@ class Player(WalkingSprite):
 
         self.anim_frame = 0
         self.update_image()
+
+    def on_collision(self, dx, dy, obj, self_rect, obj_rect):
+        if obj.LETHAL:
+            if not self.invulnerable:
+                self.health -= 1
+                self.health_changed.emit()
+
+                if self.health == 0:
+                    self.on_dead()
+                else:
+                    self.invulnerable = True
+                    self.blink(self.HURT_BLINK_MS, self._on_hurt_blink_done)
+
+            return True
+
+    def _on_hurt_blink_done(self):
+        self.invulnerable = False
+
+    def on_dead(self):
+        self.lives -= 1
+        self.lives_changed.emit()
+        self.stop_movement()
+
+        if self.lives == 0:
+            self.engine.game_over()
+        else:
+            self.health = self.MAX_HEALTH
+            self.health_changed.emit()
+            self.engine.dead()
