@@ -276,14 +276,12 @@ class ChaseMixin(object):
         super(ChaseMixin, self).tick()
 
     def start_following(self):
-        print 'Start following'
         self.following = True
         self.stop_wandering()
         self.velocity = (0, 0)
         self.start_animation('walking')
 
     def stop_following(self):
-        print 'Stop following'
         self.following = False
         self.stop_moving()
         self.wander()
