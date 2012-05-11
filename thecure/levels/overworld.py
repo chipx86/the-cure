@@ -124,7 +124,8 @@ class Overworld(Level):
         self.lost_boy.move_to(*self.eventboxes['lostboy'].rects[0].topleft)
         self.layer_map['fg'].add(self.lost_boy)
 
-        self.connect_eventbox_enter('lostboy-fadeout', self._on_lostboy_enter)
+        self.connect_eventbox_enter('lostboy-fadeout', self._on_lostboy_enter,
+                                    only_once=True)
 
         # Mountain
         self.connect_eventbox_enter('to-cliff', self._on_to_cliff)
