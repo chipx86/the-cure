@@ -305,14 +305,16 @@ class Sprite(BaseSprite):
             self.update_image()
 
     def recompute_direction(self):
-        if self.velocity[1] > 0:
-            self.set_direction(Direction.DOWN)
-        elif self.velocity[1] < 0:
-            self.set_direction(Direction.UP)
-        elif self.velocity[0] > 0:
-            self.set_direction(Direction.RIGHT)
-        elif self.velocity[0] < 0:
-            self.set_direction(Direction.LEFT)
+        if abs(self.velocity[0]) > abs(self.velocity[1]):
+            if self.velocity[0] > 0:
+                self.set_direction(Direction.RIGHT)
+            elif self.velocity[0] < 0:
+                self.set_direction(Direction.LEFT)
+        elif abs(self.velocity[1]) >= abs(self.velocity[0]):
+            if self.velocity[1] > 0:
+                self.set_direction(Direction.DOWN)
+            elif self.velocity[1] < 0:
+                self.set_direction(Direction.UP)
 
     def update_collision_rects(self):
         pass
