@@ -138,4 +138,4 @@ class AttackLineMixin(object):
         if self.attacking:
             self.stop_attacking()
 
-        return super(AttackLineMixin, self).__init__(*args, **kwargs)
+        return super(AttackLineMixin, self).handle_collision(*args, **kwargs)
