@@ -118,14 +118,18 @@ class Level(object):
                     self._allowed_spawn_bitmap[row][col] = 0
 
         for name, eventbox_data in loader.iter_eventboxes():
-            rect = pygame.Rect(eventbox_data['rect'])
-            rect.x *= Tile.WIDTH
-            rect.y *= Tile.HEIGHT
-            rect.width *= Tile.WIDTH
-            rect.height *= Tile.HEIGHT
+            rects = []
+
+            for eb_rect in eventbox_data['rect']:
+                rect = pygame.Rect(eb_rect)
+                rect.x *= Tile.WIDTH
+                rect.y *= Tile.HEIGHT
+                rect.width *= Tile.WIDTH
+                rect.height *= Tile.HEIGHT
+                rects.append(rect)
 
             eventbox = EventBox(self)
-            eventbox.rects.append(rect)
+            eventbox.rects = rects
             eventbox.watch_object_moves(self.engine.player)
             self.eventboxes[name] = eventbox
 
