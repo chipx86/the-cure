@@ -10,24 +10,24 @@ class Level1(Level):
     start_pos = (900, 6200)
 
     infected_humans = [
-        ('boy1', (1536, 5696), Direction.DOWN),
-        ('girl1', (1536, 5824), Direction.UP),
-        ('girl1', (1280, 4800), Direction.DOWN),
-        ('boy1', (1216, 4608), Direction.RIGHT),
-        ('boy1', (1152, 3904), Direction.LEFT),
-        ('girl1', (1216, 3136), Direction.DOWN),
-        ('girl1', (512, 2240), Direction.DOWN),
-        ('boy1', (1408, 2048), Direction.DOWN),
-        ('girl1', (1280, 1152), Direction.LEFT),
-        ('girl1', (384, 384), Direction.RIGHT),
-        ('boy1', (448, 576), Direction.UP),
-        ('girl1', (960, 128), Direction.LEFT),
-        ('girl1', (832, 128), Direction.DOWN),
-        ('boy1', (896, 192), Direction.DOWN),
-        ('boy1', (1600, 576), Direction.DOWN),
-        ('girl1', (320, 1344), Direction.DOWN),
-        ('girl1', (1152, 2624), Direction.DOWN),
-        ('girl1', (512, 4672), Direction.RIGHT),
+        ('boy1', (1536, 5696), Direction.SOUTH),
+        ('girl1', (1536, 5824), Direction.NORTH),
+        ('girl1', (1280, 4800), Direction.SOUTH),
+        ('boy1', (1216, 4608), Direction.EAST),
+        ('boy1', (1152, 3904), Direction.WEST),
+        ('girl1', (1216, 3136), Direction.SOUTH),
+        ('girl1', (512, 2240), Direction.SOUTH),
+        ('boy1', (1408, 2048), Direction.SOUTH),
+        ('girl1', (1280, 1152), Direction.WEST),
+        ('girl1', (384, 384), Direction.EAST),
+        ('boy1', (448, 576), Direction.NORTH),
+        ('girl1', (960, 128), Direction.WEST),
+        ('girl1', (832, 128), Direction.SOUTH),
+        ('boy1', (896, 192), Direction.SOUTH),
+        ('boy1', (1600, 576), Direction.SOUTH),
+        ('girl1', (320, 1344), Direction.SOUTH),
+        ('girl1', (1152, 2624), Direction.SOUTH),
+        ('girl1', (512, 4672), Direction.EAST),
     ]
 
     def setup(self):
@@ -78,7 +78,7 @@ class Level1(Level):
         if not self.has_vials:
             self.engine.ui_manager.show_monologue(
                 "I can't leave until I find my shipment of vials.")
-            obj.set_direction(Direction.DOWN)
+            obj.set_direction(Direction.SOUTH)
             obj.velocity = (0, 0)
             obj.move_by(0, 4)
             obj.set_running(False)

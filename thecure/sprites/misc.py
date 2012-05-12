@@ -11,7 +11,7 @@ class LostBoy(Sprite):
     SPRITESHEET_ROWS = 1
     SPRITESHEET_COLS = 6
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
+        Direction.SOUTH: {
             'default': [(0, 0)],
             'fading': [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
         },
@@ -19,7 +19,7 @@ class LostBoy(Sprite):
 
     def __init__(self):
         super(LostBoy, self).__init__()
-        self.direction = Direction.DOWN
+        self.direction = Direction.SOUTH
 
     def fadeout(self):
         self.start_animation('fading')

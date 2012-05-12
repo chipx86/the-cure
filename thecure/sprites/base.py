@@ -8,10 +8,10 @@ from thecure.timer import Timer
 
 
 class Direction(object):
-    LEFT = 0
-    RIGHT = 1
-    UP = 2
-    DOWN = 3
+    NORTH = 0
+    EAST = 1
+    SOUTH = 2
+    WEST = 3
 
     @classmethod
     def random(self):
@@ -156,16 +156,16 @@ class Sprite(BaseSprite):
     SPRITESHEET_ROWS = 1
     SPRITESHEET_COLS = 1
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
+        Direction.SOUTH: {
             'default': [(0, 0)],
         },
-        Direction.LEFT: {
+        Direction.WEST: {
             'default': [(0, 0)],
         },
-        Direction.RIGHT: {
+        Direction.EAST: {
             'default': [(0, 0)],
         },
-        Direction.UP: {
+        Direction.NORTH: {
             'default': [(0, 0)],
         },
     }
@@ -186,7 +186,7 @@ class Sprite(BaseSprite):
         assert self.name
 
         self.started = False
-        self.direction = Direction.DOWN
+        self.direction = Direction.SOUTH
         self.velocity = (0, 0)
         self.speed = self.MOVE_SPEED
 
@@ -252,7 +252,8 @@ class Sprite(BaseSprite):
     def remove(self):
         self.stop()
         self.collidable = False
-        self.hide()
+        self.visible = 0
+        self.dirty = 1
         self.layer.remove(self)
         self.layer = None
 
@@ -306,14 +307,14 @@ class Sprite(BaseSprite):
     def recompute_direction(self):
         if abs(self.velocity[0]) > abs(self.velocity[1]):
             if self.velocity[0] > 0:
-                self.set_direction(Direction.RIGHT)
+                self.set_direction(Direction.EAST)
             elif self.velocity[0] < 0:
-                self.set_direction(Direction.LEFT)
+                self.set_direction(Direction.WEST)
         elif abs(self.velocity[1]) >= abs(self.velocity[0]):
             if self.velocity[1] > 0:
-                self.set_direction(Direction.DOWN)
+                self.set_direction(Direction.SOUTH)
             elif self.velocity[1] < 0:
-                self.set_direction(Direction.UP)
+                self.set_direction(Direction.NORTH)
 
     def update_collision_rects(self):
         pass
@@ -323,10 +324,10 @@ class Sprite(BaseSprite):
             return
 
         x, y = {
-            Direction.LEFT: (-1, None),
-            Direction.RIGHT: (1, None),
-            Direction.UP: (None, -1),
-            Direction.DOWN: (None, 1),
+            Direction.WEST: (-1, None),
+            Direction.EAST: (1, None),
+            Direction.NORTH: (None, -1),
+            Direction.SOUTH: (None, 1),
         }[self.direction]
 
         if x:
@@ -359,22 +360,22 @@ class Sprite(BaseSprite):
 
 class WalkingSprite(Sprite):
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
+        Direction.SOUTH: {
             'default': [(1, 0)],
             'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
             'running': [(0, 0), (2, 0)],
         },
-        Direction.LEFT: {
+        Direction.WEST: {
             'default': [(1, 1)],
             'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
             'running': [(0, 1), (2, 1)],
         },
-        Direction.RIGHT: {
+        Direction.EAST: {
             'default': [(1, 2)],
             'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
             'running': [(0, 2), (2, 2)],
         },
-        Direction.UP: {
+        Direction.NORTH: {
             'default': [(1, 3)],
             'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
             'running': [(0, 3), (2, 3)],

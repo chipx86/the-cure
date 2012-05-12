@@ -77,7 +77,7 @@ class Cliff(Level):
         player.allow_player_control = False
         player.velocity = (0, 0)
         player.stop_running()
-        player.set_direction(Direction.DOWN)
+        player.set_direction(Direction.SOUTH)
         player.stop()
 
         ingredients = [
@@ -122,7 +122,7 @@ class Cliff(Level):
                 Timer(ms=1500, cb=on_done, one_shot=True)
 
     def _on_ingredients_processed(self):
-        self.engine.player.set_direction(Direction.UP)
+        self.engine.player.set_direction(Direction.NORTH)
 
         if self.killed_wife:
             s = "I'll test it on myself to make sure there aren't any side " \
@@ -143,7 +143,7 @@ class Cliff(Level):
 
     def _after_flash(self):
         self.effect = None
-        self.engine.player.set_direction(Direction.DOWN)
+        self.engine.player.set_direction(Direction.SOUTH)
 
         if self.killed_wife:
             lines = [
@@ -180,7 +180,7 @@ class Cliff(Level):
             'If only I had made different choices...')
         player.allow_player_control = False
         player.velocity = (0, 0)
-        player.set_direction(Direction.RIGHT)
+        player.set_direction(Direction.EAST)
         player.update_velocity()
         player.moved.connect(lambda dx, dy: self._on_player_move())
         self.pending_jump = False

@@ -41,17 +41,17 @@ class Bullet(Sprite):
             self.remove()
 
     def move_beside(self, sprite, direction):
-        if direction == Direction.UP:
+        if direction == Direction.NORTH:
             self.move_to(sprite.rect.right - self.rect.width - self.OFFSET_X,
                          sprite.rect.y - self.rect.height / 2)
-        elif direction == Direction.DOWN:
+        elif direction == Direction.SOUTH:
             self.move_to(sprite.rect.x + self.OFFSET_X,
                          sprite.rect.bottom - 2 * self.rect.height)
-        elif direction == Direction.LEFT:
+        elif direction == Direction.WEST:
             self.move_to(sprite.rect.x + self.rect.width / 2,
                          sprite.rect.y + self.OFFSET_Y +
                          (sprite.rect.height - self.rect.height) / 2)
-        elif direction == Direction.RIGHT:
+        elif direction == Direction.EAST:
             self.move_to(sprite.rect.right - 2 * self.rect.width,
                          sprite.rect.y + self.OFFSET_Y +
                          (sprite.rect.height - self.rect.height) / 2)
@@ -79,23 +79,23 @@ class Player(WalkingSprite):
     HURT_BLINK_MS = 250
 
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: dict(
-            WalkingSprite.SPRITESHEET_FRAMES[Direction.DOWN], **{
+        Direction.SOUTH: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.SOUTH], **{
                 'shooting': [(2, 0)],
                 'falling': [(1, 0)],
             }),
-        Direction.LEFT: dict(
-            WalkingSprite.SPRITESHEET_FRAMES[Direction.LEFT], **{
+        Direction.WEST: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.WEST], **{
                 'shooting': [(0, 1)],
                 'falling': [(1, 1)],
             }),
-        Direction.RIGHT: dict(
-            WalkingSprite.SPRITESHEET_FRAMES[Direction.RIGHT], **{
+        Direction.EAST: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.EAST], **{
                 'shooting': [(0, 2)],
                 'falling': [(1, 2)],
             }),
-        Direction.UP: dict(
-            WalkingSprite.SPRITESHEET_FRAMES[Direction.UP], **{
+        Direction.NORTH: dict(
+            WalkingSprite.SPRITESHEET_FRAMES[Direction.NORTH], **{
                 'shooting': [(2, 3)],
                 'falling': [(1, 3)],
             }),
@@ -145,26 +145,26 @@ class Player(WalkingSprite):
 
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
-                self.move_direction(Direction.RIGHT)
+                self.move_direction(Direction.EAST)
             elif event.key == K_LEFT:
-                self.move_direction(Direction.LEFT)
+                self.move_direction(Direction.WEST)
             elif event.key == K_UP:
-                self.move_direction(Direction.UP)
+                self.move_direction(Direction.NORTH)
             elif event.key == K_DOWN:
-                self.move_direction(Direction.DOWN)
+                self.move_direction(Direction.SOUTH)
             elif event.key == K_c:
                 self.set_shooting(True)
             elif event.key == K_F4:
                 self.collidable = not self.collidable
         elif event.type == KEYUP:
             if event.key == K_RIGHT:
-                self.stop_moving_direction(Direction.RIGHT)
+                self.stop_moving_direction(Direction.EAST)
             elif event.key == K_LEFT:
-                self.stop_moving_direction(Direction.LEFT)
+                self.stop_moving_direction(Direction.WEST)
             elif event.key == K_UP:
-                self.stop_moving_direction(Direction.UP)
+                self.stop_moving_direction(Direction.NORTH)
             elif event.key == K_DOWN:
-                self.stop_moving_direction(Direction.DOWN)
+                self.stop_moving_direction(Direction.SOUTH)
             elif event.key == K_c:
                 self.set_shooting(False)
 
@@ -177,9 +177,9 @@ class Player(WalkingSprite):
         self.update_image()
 
     def stop_moving_direction(self, direction):
-        if direction in (Direction.LEFT, Direction.RIGHT):
+        if direction in (Direction.WEST, Direction.EAST):
             self.velocity = (0, self.velocity[1])
-        elif direction in (Direction.UP, Direction.DOWN):
+        elif direction in (Direction.NORTH, Direction.SOUTH):
             self.velocity = (self.velocity[0], 0)
 
         # The direction may not make any sense anymore, so recompute it.
@@ -232,7 +232,7 @@ class Player(WalkingSprite):
     def fall(self):
         self.collidable = False
         self.stop_running()
-        self.set_direction(Direction.DOWN)
+        self.set_direction(Direction.SOUTH)
         self.velocity = (0, self.FALL_SPEED)
         self.falling = True
         self._update_animation()

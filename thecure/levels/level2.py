@@ -10,16 +10,16 @@ class Level2(Level):
     start_pos = (2144, 2456)
 
     infected_humans = [
-        ('girl1', (192, 2048), Direction.DOWN),
-        ('girl1', (448, 2048), Direction.LEFT),
-        ('girl1', (2880, 2240), Direction.LEFT),
-        ('girl1', (2688, 2304), Direction.UP),
-        ('girl1', (2880, 1408), Direction.UP),
-        ('girl1', (2880, 256), Direction.DOWN),
-        ('girl1', (832, 1216), Direction.UP),
-        ('girl1', (320, 768), Direction.RIGHT),
-        ('girl1', (1280, 1216), Direction.UP),
-        ('girl1', (320, 64), Direction.DOWN),
+        ('girl1', (192, 2048), Direction.SOUTH),
+        ('girl1', (448, 2048), Direction.WEST),
+        ('girl1', (2880, 2240), Direction.WEST),
+        ('girl1', (2688, 2304), Direction.NORTH),
+        ('girl1', (2880, 1408), Direction.NORTH),
+        ('girl1', (2880, 256), Direction.SOUTH),
+        ('girl1', (832, 1216), Direction.NORTH),
+        ('girl1', (320, 768), Direction.EAST),
+        ('girl1', (1280, 1216), Direction.NORTH),
+        ('girl1', (320, 64), Direction.SOUTH),
     ]
 
     def setup(self):
@@ -72,7 +72,7 @@ class Level2(Level):
         if not self.got_mushroom:
             self.engine.ui_manager.show_monologue(
                 'I still need to find that mushroom.')
-            obj.set_direction(Direction.DOWN)
+            obj.set_direction(Direction.SOUTH)
             obj.velocity = (0, 0)
             obj.move_by(0, 4)
             obj.set_running(False)

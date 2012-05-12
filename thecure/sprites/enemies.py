@@ -10,19 +10,19 @@ from thecure.timer import Timer
 
 
 STANDARD_SPRITESHEET_FRAMES = {
-    Direction.DOWN: {
+    Direction.SOUTH: {
         'default': [(1, 0)],
         'wandering': [(0, 0), (1, 0), (2, 0), (1, 0)],
     },
-    Direction.LEFT: {
+    Direction.WEST: {
         'default': [(1, 1)],
         'wandering': [(0, 1), (1, 1), (2, 1), (1, 1)],
     },
-    Direction.RIGHT: {
+    Direction.EAST: {
         'default': [(1, 2)],
         'wandering': [(0, 2), (1, 2), (2, 2), (1, 2)],
     },
-    Direction.UP: {
+    Direction.NORTH: {
         'default': [(1, 3)],
         'wandering': [(0, 3), (1, 3), (2, 3), (1, 3)],
     },
@@ -99,19 +99,19 @@ class Gargoyle(WanderMixin, ChaseMixin, Enemy):
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
+        Direction.SOUTH: {
             'default': [(1, 0)],
             'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
         },
-        Direction.LEFT: {
+        Direction.WEST: {
             'default': [(1, 1)],
             'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
         },
-        Direction.RIGHT: {
+        Direction.EAST: {
             'default': [(1, 2)],
             'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
         },
-        Direction.UP: {
+        Direction.NORTH: {
             'default': [(1, 3)],
             'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
         },
@@ -138,19 +138,19 @@ class Troll(WanderMixin, ChaseMixin, Enemy):
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
     SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
+        Direction.SOUTH: {
             'default': [(1, 0)],
             'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
         },
-        Direction.LEFT: {
+        Direction.WEST: {
             'default': [(1, 1)],
             'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
         },
-        Direction.RIGHT: {
+        Direction.EAST: {
             'default': [(1, 2)],
             'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
         },
-        Direction.UP: {
+        Direction.NORTH: {
             'default': [(1, 3)],
             'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
         },

@@ -256,19 +256,19 @@ class ChaseMixin(object):
 
                 if player.rect.x > self.rect.x:
                     x = 1
-                    x_dir = Direction.RIGHT
+                    x_dir = Direction.EAST
                 elif player.rect.x < self.rect.x:
                     x = -1
-                    x_dir = Direction.LEFT
+                    x_dir = Direction.WEST
                 else:
                     x = 0
 
                 if player.rect.y > self.rect.y:
                     y = 1
-                    y_dir = Direction.DOWN
+                    y_dir = Direction.SOUTH
                 elif player.rect.y < self.rect.y:
                     y = -1
-                    y_dir = Direction.UP
+                    y_dir = Direction.NORTH
                 else:
                     y = 0
 
