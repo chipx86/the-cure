@@ -35,7 +35,7 @@ class Cliff(Level):
 
     def _on_wife_transitioned(self):
         self.engine.player.allow_player_control = False
-        self.engine.ui_manager.show_dialogue(
+        self.engine.ui.show_dialogue(
             actors={
                 'player': self.engine.player,
                 'wife': self.wife,
@@ -64,7 +64,7 @@ class Cliff(Level):
         Timer(ms=1000, cb=self._say_sorry, one_shot=True)
 
     def _say_sorry(self):
-        self.engine.ui_manager.show_monologue([
+        self.engine.ui.show_monologue([
             "Laura, I'm so sorry. I'm so, so sorry.",
             "I'm a monster. I should just kill myself.",
             "...",
@@ -130,7 +130,7 @@ class Cliff(Level):
         else:
             s = 'Here goes nothing'
 
-        self.engine.ui_manager.show_monologue(s, on_done=self._use_cure)
+        self.engine.ui.show_monologue(s, on_done=self._use_cure)
 
     def _use_cure(self):
         timer = Timer(ms=1500, cb=self._after_flash, one_shot=True,
@@ -162,7 +162,7 @@ class Cliff(Level):
             lines = "I can think clearly now. I remember everything.\n" \
                     "I've been hallucinating."
 
-        self.engine.ui_manager.show_monologue(lines, on_done=self._after_cure)
+        self.engine.ui.show_monologue(lines, on_done=self._after_cure)
 
     def _after_cure(self):
         if self.killed_wife:
@@ -176,7 +176,7 @@ class Cliff(Level):
 
     def _begin_jump_off_cliff(self):
         player = self.engine.player
-        self.engine.ui_manager.show_monologue(
+        self.engine.ui.show_monologue(
             'If only I had made different choices...')
         player.allow_player_control = False
         player.velocity = (0, 0)
@@ -248,5 +248,5 @@ class Cliff(Level):
                      'If only you had made different choices.',
                 ]
 
-        widget = self.engine.ui_manager.show_textbox(s)
+        widget = self.engine.ui.show_textbox(s)
         widget.closed.connect(self.engine._setup_game)

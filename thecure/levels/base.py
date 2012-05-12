@@ -317,7 +317,7 @@ class Level(object):
     def add_monologue(self, eventbox_name, text, timeout_ms=None):
         self.connect_eventbox_enter(
             eventbox_name,
-            lambda: self.engine.ui_manager.show_monologue(text, timeout_ms),
+            lambda: self.engine.ui.show_monologue(text, timeout_ms),
             True)
 
     def on_tick(self):

@@ -54,7 +54,7 @@ class Wife(ChaseMixin, Human, WalkingSprite):
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
         if obj == get_engine().player and not self.showed_exclamation:
-            get_engine().ui_manager.close_monologues()
+            get_engine().ui.close_monologues()
             self.show_exclamation('heart_exclamation',
                                   self._transition_clean)
             self.showed_exclamation = True

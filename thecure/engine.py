@@ -11,7 +11,7 @@ from thecure.resources import get_font_filename
 from thecure.signals import Signal
 from thecure.sprites import Player
 from thecure.timer import Timer
-from thecure.ui import UIManager
+from thecure.ui import GameUI
 
 
 class Camera(object):
@@ -58,9 +58,6 @@ class TheCureEngine(object):
         # Signals
         self.tick = Signal()
 
-        # Useful objects
-        self._debug_font = pygame.font.Font(get_font_filename(), 16)
-
         # State and objects
         self.active_level = None
         self.active_cutscene = None
@@ -73,8 +70,7 @@ class TheCureEngine(object):
         self.level_draw_area = None
         self.camera = None
 
-        self.ui_manager = UIManager(self)
-        self.ui_manager.add_control_panel()
+        self.ui = GameUI(self)
 
         # Debug flags
         self.debug_rects = False
@@ -148,7 +144,7 @@ class TheCureEngine(object):
             s = 'You have %d more chances to get this right.' % \
                 self.player.lives
 
-        widget = self.ui_manager.show_textbox(s)
+        widget = self.ui.show_textbox(s)
         self.paused = True
         self.player.stop()
         widget.closed.connect(self.restart_level)
@@ -159,7 +155,7 @@ class TheCureEngine(object):
         self.player.start()
 
     def game_over(self):
-        widget = self.ui_manager.show_textbox(
+        widget = self.ui.show_textbox(
             ['You died. Maybe it was for the best.',
              'Game over.'])
         self.paused = True
@@ -182,8 +178,8 @@ class TheCureEngine(object):
             self.quit()
             return False
 
-        if (self.ui_manager and not self.active_cutscene and
-            self.ui_manager.handle_event(event)):
+        if (self.ui and not self.active_cutscene and
+            self.ui.handle_event(event)):
             return True
 
         if event.type == KEYDOWN and event.key == K_F2:
@@ -193,7 +189,7 @@ class TheCureEngine(object):
         elif self.active_cutscene:
             self.active_cutscene.handle_event(event)
         elif event.type == KEYDOWN and event.key == K_ESCAPE:
-            self.ui_manager.confirm_quit()
+            self.ui.confirm_quit()
         elif self.active_level:
             if event.type == KEYDOWN and event.key == K_RETURN:
                 if self.paused:
@@ -213,11 +209,11 @@ class TheCureEngine(object):
 
     def _pause(self):
         self.paused = True
-        self.ui_manager.pause()
+        self.ui.pause()
 
     def _unpause(self):
         self.paused = False
-        self.ui_manager.unpause()
+        self.ui.unpause()
 
     def _draw(self):
         if self.camera:
@@ -233,7 +229,7 @@ class TheCureEngine(object):
                              self.level_draw_pos,
                              self.level_draw_area)
 
-        self.ui_manager.draw(self.screen)
+        self.ui.draw(self.screen)
 
         if self.show_debug_info:
             debug_str = '%0.f FPS    X: %s    Y: %s' % (
@@ -241,7 +237,7 @@ class TheCureEngine(object):
                 self.player.rect.left, self.player.rect.top)
 
             self.screen.blit(
-                self._debug_font.render(debug_str, True, self.DEBUG_COLOR),
+                self.ui.font.render(debug_str, True, self.DEBUG_COLOR),
                 self.DEBUG_POS)
 
         pygame.display.flip()

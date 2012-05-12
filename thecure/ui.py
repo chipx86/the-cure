@@ -9,9 +9,9 @@ from thecure.timer import Timer
 
 
 class Widget(object):
-    def __init__(self, ui_manager):
-        self.ui_manager = ui_manager
-        self.ui_manager.widgets.append(self)
+    def __init__(self, ui):
+        self.ui = ui
+        self.ui.widgets.append(self)
         self.rect = pygame.Rect(0, 0, 0, 0)
 
         self.closed = Signal()
@@ -25,7 +25,7 @@ class Widget(object):
         self.rect.height = h
 
     def close(self):
-        self.ui_manager.close(self)
+        self.ui.close(self)
 
     def draw(self, surface):
         raise NotImplemented
@@ -37,10 +37,10 @@ class TextBox(Widget):
     TEXT_COLOR = (255, 255, 255)
     BORDER_WIDTH = 1
 
-    def __init__(self, ui_manager, text, line_spacing=10, stay_open=False,
+    def __init__(self, ui, text, line_spacing=10, stay_open=False,
                  bg_color=BG_COLOR, border_color=BORDER_COLOR,
                  text_color=TEXT_COLOR):
-        super(TextBox, self).__init__(ui_manager)
+        super(TextBox, self).__init__(ui)
         self.text = text
         self.line_spacing = line_spacing
         self.surface = None
@@ -74,7 +74,7 @@ class TextBox(Widget):
                     column = {}, column
 
                 attrs, text = column
-                font = attrs.get('font', self.ui_manager.font)
+                font = attrs.get('font', self.ui.font)
 
                 text_surface = font.render(text, True, self.text_color)
                 column_surfaces.append((attrs, text_surface))
@@ -121,24 +121,24 @@ class TextBox(Widget):
         surface.blit(self.surface, self.rect.topleft)
 
 
-class ControlPanel(Widget):
+class StatusArea(Widget):
     IMAGE_SPACING = 5
     SIDE_SPACING = 15
     PADDING = 5
 
     def __init__(self, *args, **kwargs):
-        super(ControlPanel, self).__init__(*args, **kwargs)
+        super(StatusArea, self).__init__(*args, **kwargs)
 
         self.full_heart = load_spritesheet_frame('hearts', (0, 0), 1, 3)
         self.half_heart = load_spritesheet_frame('hearts', (0, 1), 1, 3)
         self.empty_heart = load_spritesheet_frame('hearts', (0, 2), 1, 3)
         self.life_image = load_image('sprites/life')
 
-        self.resize(self.ui_manager.size[0],
+        self.resize(self.ui.size[0],
                     self.life_image.get_height() + 2 * self.PADDING)
         self.surface = pygame.Surface(self.rect.size).convert_alpha()
 
-        player = self.ui_manager.engine.player
+        player = self.ui.engine.player
         player.health_changed.connect(self.render)
         player.lives_changed.connect(self.render)
 
@@ -148,7 +148,7 @@ class ControlPanel(Widget):
         self.surface.fill((0, 0, 0, 0))
 
         heart_width = self.full_heart.get_width()
-        player = self.ui_manager.engine.player
+        player = self.ui.engine.player
         x = self.SIDE_SPACING
         y = (self.rect.height - self.full_heart.get_height()) / 2
 
@@ -176,10 +176,10 @@ class ControlPanel(Widget):
         surface.blit(self.surface, self.rect.topleft)
 
 
-class UIManager(object):
-    SCREEN_PADDING = 20
+class GameUI(object):
+    PADDING = 40
     TEXTBOX_HEIGHT = 150
-    CONTROL_PANEL_HEIGHT = 40
+    STATUS_AREA_HEIGHT = 40
 
     MONOLOGUE_X = 250
     MONOLOGUE_Y_OFFSET = 50
@@ -199,25 +199,22 @@ class UIManager(object):
 
         self.active_monologue = None
         self.monologue_timer = None
+        self.paused_textbox = None
+        self.confirm_quit_box = None
 
         self.default_font_file = get_font_filename()
         self.font = pygame.font.Font(self.default_font_file, 20)
         self.small_font = pygame.font.Font(self.default_font_file, 16)
 
-        self.paused_textbox = None
-        self.confirm_quit_box = None
-
-    def add_control_panel(self):
-        self.control_panel = ControlPanel(self)
-        self.control_panel.move_to(0, 0)
+        self.status_area = StatusArea(self)
+        self.status_area.move_to(0, 0)
 
     def show_textbox(self, text, **kwargs):
         textbox = TextBox(self, text, **kwargs)
-        textbox.resize(self.size[0] - 2 * self.SCREEN_PADDING,
+        textbox.resize(self.size[0] - 2 * self.PADDING,
                        self.TEXTBOX_HEIGHT)
-        textbox.move_to(self.SCREEN_PADDING,
-                        self.size[1] - textbox.rect.height -
-                        self.SCREEN_PADDING)
+        textbox.move_to(self.PADDING, (self.size[1] - textbox.rect.height) / 2)
+
         return textbox
 
     def show_monologue(self, text, timeout_ms=None, on_done=None,
@@ -237,7 +234,7 @@ class UIManager(object):
 
         lines = text[0].split('\n')
         textbox = TextBox(self, lines, stay_open=True, **kwargs)
-        textbox.resize(self.size[0] - 2 * self.SCREEN_PADDING -
+        textbox.resize(self.size[0] - 2 * self.PADDING -
                        self.MONOLOGUE_X,
                        self.MONOLOGUE_HEIGHT * len(lines))
         self.active_monologue = textbox
@@ -298,16 +295,14 @@ class UIManager(object):
 
         if event.type == KEYDOWN:
             if self.confirm_quit_box:
+                handled = True
+
                 if event.key == K_ESCAPE:
                     self.confirm_quit_box.close()
                     self.confirm_quit_box = None
-                    handled = True
                     self.engine.paused = False
                 elif event.key == K_q:
                     self.engine.quit()
-                    handled = True
-                else:
-                    return True
             elif event.key in (K_ESCAPE, K_RIGHT, K_SPACE, K_RETURN):
                 for widget in self.widgets:
                     if (isinstance(widget, TextBox) and

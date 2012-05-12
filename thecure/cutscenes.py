@@ -41,12 +41,12 @@ class TextPage(DelayPage):
         self.widget = None
 
     def start(self):
-        ui_manager = get_engine().ui_manager
+        ui = get_engine().ui
         attrs = {
-            'font': ui_manager.small_font,
+            'font': ui.small_font,
         }
 
-        self.widget = ui_manager.show_textbox([
+        self.widget = ui.show_textbox([
             (attrs, line)
             for line in self.text.split('\n')
         ], bg_color=(0, 0, 0, 220))

@@ -351,7 +351,7 @@ class Overworld(Level):
             True)
 
     def _on_item_entered(self, name, text, item):
-        self.engine.ui_manager.show_monologue(text)
+        self.engine.ui.show_monologue(text)
         self.has_items[name] = True
         item.remove()
 
@@ -361,7 +361,7 @@ class Overworld(Level):
 
     def _on_lostboy_gone(self):
         Timer(ms=1000, one_shot=True, cb=lambda:
-            self.engine.ui_manager.show_monologue(
+            self.engine.ui.show_monologue(
                 ['That was weird.',
                  'I swear I heard music playing.']))
 
@@ -375,7 +375,7 @@ class Overworld(Level):
             Timer(ms=1000, one_shot=True,
                   cb=lambda: self.engine.switch_level(1))
         else:
-            self.engine.ui_manager.show_monologue(
+            self.engine.ui.show_monologue(
                 "I'm still missing some of the ingredients.")
 
             player.set_direction(Direction.DOWN)
