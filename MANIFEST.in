@@ -1,0 +1,5 @@
+recursive-include data *.png *.json *.ttf *.mp3
+include ez_setup.py
+include main.py
+include README
+include COPYING
