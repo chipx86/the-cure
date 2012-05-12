@@ -1,7 +1,7 @@
 import pygame
 
 
-class QuadTree(object):
+class SpriteQuadTree(object):
     def __init__(self, rect, depth=6, parent=None):
         depth -= 1
 
@@ -11,7 +11,7 @@ class QuadTree(object):
         self.depth = depth
         self.cx = self.rect.centerx
         self.cy = self.rect.centery
-        self.moved_cnxs = {}
+        self._moved_cnxs = {}
         self._next_stamp = 1
 
         if depth == 0:
@@ -22,32 +22,28 @@ class QuadTree(object):
         else:
             quad_size = (rect.width / 2, rect.height / 2)
 
-            self.nw_tree = QuadTree(pygame.Rect(rect.x, rect.y, *quad_size),
-                                    depth, self)
-            self.ne_tree = QuadTree(pygame.Rect(self.cx, rect.y, *quad_size),
-                                    depth, self)
-            self.sw_tree = QuadTree(pygame.Rect(rect.x, self.cy, *quad_size),
-                                    depth, self)
-            self.se_tree = QuadTree(pygame.Rect(self.cx, self.cy, *quad_size),
-                                    depth, self)
-
-    def __repr__(self):
-        return 'Quad Tree (%s, %s, %s, %s)' % (self.rect.left, self.rect.top,
-                                               self.rect.width,
-                                               self.rect.height)
+            self.nw_tree = SpriteQuadTree(
+                pygame.Rect(rect.x, rect.y, *quad_size),
+                depth, self)
+            self.ne_tree = SpriteQuadTree(
+                pygame.Rect(self.cx, rect.y, *quad_size),
+                depth, self)
+            self.sw_tree = SpriteQuadTree(
+                pygame.Rect(rect.x, self.cy, *quad_size),
+                depth, self)
+            self.se_tree = SpriteQuadTree(
+                pygame.Rect(self.cx, self.cy, *quad_size),
+                depth, self)
 
     def add(self, sprite):
-        if not self.parent:
-            assert sprite not in self.moved_cnxs
+        if not self.parent and sprite.can_move:
+            self._moved_cnxs[sprite] = sprite.moved.connect(
+                lambda dx, dy: self._recompute_sprite(sprite))
 
-            if sprite.can_move:
-                self.moved_cnxs[sprite] = sprite.moved.connect(
-                    lambda dx, dy: self._recompute_sprite(sprite))
-
-        # If it's overlapping all regions, or we're a leaf, it
-        # belongs in items. Otherwise, stick it in as many regions as
-        # necessary.
-        if self.depth > 0:
+        # If this is a leaf node or the sprite is overlapping all quadrants,
+        # store it in this QuadTree's list of sprites. If it's in fewer
+        # quadrants, go through and add to each that it touches.
+        if self.depth == 0:
             trees = list(self._get_trees(sprite.rect))
             assert len(trees) > 0
 
@@ -74,15 +70,10 @@ class QuadTree(object):
         sprite.quad_trees.clear()
 
         if sprite.can_move:
-            cnx = self.moved_cnxs.pop(sprite)
+            cnx = self._moved_cnxs.pop(sprite)
             cnx.disconnect()
 
     def get_sprites(self, rect=None, stamp=None):
-        """Returns any sprites stored in quadrants intersecting with rect.
-
-        This does not necessarily mean that the sprites themselves intersect
-        with rect.
-        """
         if stamp is None:
             stamp = self._next_stamp
             self._next_stamp += 1
@@ -135,13 +126,10 @@ class QuadTree(object):
 class Layer(object):
     def __init__(self, name, index, parent):
         self.name = name
-        self.parent = parent
         self.index = index
-        self.quad_tree = QuadTree(pygame.Rect(0, 0, *self.parent.size))
+        self.parent = parent
+        self.quad_tree = SpriteQuadTree(pygame.Rect(0, 0, *self.parent.size))
         self.tick_sprites = []
-
-    def __repr__(self):
-        return 'Layer %s on parent %s' % (self.index, self.parent)
 
     def add(self, *objs):
         for obj in objs:
@@ -182,15 +170,6 @@ class Layer(object):
 
     def iterate_in_rect(self, rect):
         return self.quad_tree.get_sprites(rect)
-
-    def has_sprites_in_rect(self, rect):
-        for sprite in self.iterate_in_rect(rect):
-            return True
-
-        return False
-
-    def handle_event(self, event):
-        pass
 
     def tick(self):
         for sprite in self.tick_sprites:

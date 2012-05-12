@@ -70,9 +70,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
             self.rect.topleft = old_pos
 
     def check_collisions(self, dx=0, dy=0):
-        old_colliding_objects = set(self._colliding_objects)
         self._colliding_objects = set()
-
         allow_move = True
 
         for obj, self_rect, obj_rect in self.get_collisions():
@@ -83,13 +81,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
 
             self._colliding_objects.add(obj)
 
-        for obj in old_colliding_objects.difference(self._colliding_objects):
-            obj.handle_stop_colliding(self)
-
         return allow_move
-
-    def should_adjust_position_with(self, obj, dx, dy):
-        return True
 
     def get_absolute_collision_rects(self):
         if self.collision_rects:
@@ -98,13 +90,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         else:
             return [self.rect]
 
-    def get_collisions(self, tree=None, ignore_collidable_flag=False):
-        if not self.SHOULD_CHECK_COLLISIONS and not ignore_collidable_flag:
-            raise StopIteration
-
-        if tree is None:
-            tree = self.layer.quad_tree
-
+    def get_collisions(self, ignore_collidable_flag=False):
         num_checks = 0
 
         if self.collision_rects:
@@ -114,9 +100,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
         else:
             self_rect = self.rect
 
-        # We want more detailed collision info, so we use our own logic
-        # instead of calling spritecollide.
-        for obj in tree.get_sprites(self_rect):
+        for obj in self.layer.quad_tree.get_sprites(self_rect):
             num_checks += 1
             self_rect, obj_rect = \
                 self._check_collision(self, obj, ignore_collidable_flag)
@@ -127,9 +111,7 @@ class BaseSprite(pygame.sprite.DirtySprite):
     def _check_collision(self, left, right, ignore_collidable_flag):
         if (left == right or
             (not ignore_collidable_flag and
-             ((not left.collidable or not right.collidable) or
-              (not left.SHOULD_CHECK_COLLISIONS and
-               not right.SHOULD_CHECK_COLLISIONS))) or
+             ((not left.collidable or not right.collidable))) or
             left.layer.index != right.layer.index):
             return None, None
 
@@ -142,17 +124,9 @@ class BaseSprite(pygame.sprite.DirtySprite):
             if right_index == -1:
                 continue
 
-            right_rect = right_rects[right_index]
-
-            return left_rect, right_rect
+            return left_rect, right_rects[right_index]
 
         return None, None
-
-    def handle_collision(self, obj, rect, dx, dy):
-        pass
-
-    def handle_stop_colliding(self, obj):
-        pass
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
         return False
@@ -233,18 +207,6 @@ class Sprite(BaseSprite):
     def stop(self):
         self.stop_moving()
         self.started = False
-
-    def show(self):
-        if not self.visible:
-            self.visible = 1
-            self.dirty = 2
-            self.layer.update_sprite(self)
-
-    def hide(self):
-        if self.visible:
-            self.visible = 0
-            self.dirty = 1
-            self.layer.update_sprite(self)
 
     def damage(self, damage_value):
         if self.health > 0:

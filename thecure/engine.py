@@ -133,7 +133,6 @@ class TheCureEngine(object):
 
         self.player.move_to(*self.active_level.start_pos)
         self.camera.update()
-        self.player.show()
 
         self.active_level.start()
 

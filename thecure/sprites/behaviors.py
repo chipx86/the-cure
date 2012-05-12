@@ -203,12 +203,6 @@ class AttackLineMixin(object):
     def _allow_attacking(self):
         self.can_attack = True
 
-    def handle_collision(self, *args, **kwargs):
-        if self.attacking:
-            self.stop_attacking()
-
-        return super(AttackLineMixin, self).handle_collision(*args, **kwargs)
-
 
 class ChaseMixin(object):
     APPROACH_DISTANCE = 250

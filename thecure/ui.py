@@ -297,11 +297,11 @@ class GameUI(object):
             if self.confirm_quit_box:
                 handled = True
 
-                if event.key == K_ESCAPE:
+                if event.key in (K_ESCAPE, K_n):
                     self.confirm_quit_box.close()
                     self.confirm_quit_box = None
                     self.engine.paused = False
-                elif event.key == K_q:
+                elif event.key == K_y:
                     self.engine.quit()
             elif event.key in (K_ESCAPE, K_RIGHT, K_SPACE, K_RETURN):
                 for widget in self.widgets:
@@ -329,11 +329,9 @@ class GameUI(object):
 
         self.engine.paused = True
         self.confirm_quit_box = self.show_textbox([
-            "Do you want to quit?",
-            ({'font': self.small_font},
-             "Press 'Q' to quit."),
-            ({'font': self.small_font},
-             "Press 'Escape' to cancel.")
+            "Giving up already?",
+            ({'font': self.small_font}, "'Y' to give up."),
+            ({'font': self.small_font}, "'N' to keep playing.")
         ])
 
     def draw(self, surface):
