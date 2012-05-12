@@ -12,6 +12,7 @@ class UIWidget(object):
     def __init__(self, ui):
         self.ui = ui
         self.rect = pygame.Rect(0, 0, 0, 0)
+        self.closed = Signal()
 
 
 class TextBox(UIWidget):
@@ -31,8 +32,6 @@ class TextBox(UIWidget):
         self.bg_color = bg_color
         self.border_color = border_color
         self.text_color = text_color
-
-        self.closed = Signal()
 
     def _render_text(self):
         if isinstance(self.text, list):
@@ -291,6 +290,61 @@ class GameUI(object):
             "'Y' to give up.",
             "'N' to keep playing."
         ])
+
+    def show_opening_scene(self, on_done):
+        lines = [
+            (3000, "I'm Dr. Nick Rogers, Ph.D."),
+            (6000,
+             "I moved to this little town in the mountains with my "
+             "wife, Laura, just 6 short months ago.\n"
+             "I wanted a safe and quiet place to conduct my research."),
+            (3000, "I planned to cure the common cold."),
+            (6000,
+             "The plan was to create an airborne virus, safe for "
+             "humans, that would hunt down and destroy\n"
+             "the viruses that cause the cold symptoms."),
+            (6000,
+             "My experiments on rats and chimps were promising.\n"
+             "I needed to begin human trials, but that would take "
+             "years."),
+            (6000,
+             "This morning... The details are still a bit fuzzy. "
+             "I woke up in my lab up\n"
+             "against the wall with a terrible headache."),
+            (3000,
+             "There was an explosion in the lab, and the virus was exposed."),
+            (4000,
+             "Stumbling out of the lab, I saw the townfolk bleeding, "
+             "screaming, faces distorted."),
+            (7000,
+             "I had seen this before. In one of the batches of the "
+             "virus, the chimps began to hallucinate. \n"
+             "Some became aggressive and twisted their faces up in "
+             "agony."),
+            (6000,
+             "I appeared to be fine, and I knew how to cure this. "
+             "Unfortunately, the ingredients were destroyed."),
+            (4000,
+             "I told Laura to go to the mountains where it was safe, and "
+             "ventured out to find the ingredients for the cure."),
+        ]
+
+        self._show_opening_line(lines, on_done)
+
+    def _show_opening_line(self, lines, on_done, prev_textbox=None):
+        if prev_textbox:
+            self.close(prev_textbox)
+
+        if not lines:
+            on_done()
+        else:
+            timeout, text = lines[0]
+            textbox = self.show_textbox(text.split('\n'))
+            textbox.closed.connect(
+                lambda: self._show_opening_line(lines[1:],
+                                                on_done, textbox))
+
+            Timer(ms=timeout, cb=textbox.close, one_shot=True)
 
     def draw(self, surface):
         for element in self.widgets:
