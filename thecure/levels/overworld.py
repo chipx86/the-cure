@@ -79,7 +79,7 @@ class Overworld(Level):
         # Mountain
         {
             'rect': pygame.Rect(69, 2, 62, 32),
-            'mobs': [Slime, Troll], # XXX
+            'mobs': [Slime, Troll],
             'min': 10,
             'max': 20,
         },
