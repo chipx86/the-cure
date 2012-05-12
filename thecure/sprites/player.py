@@ -78,25 +78,26 @@ class Player(WalkingSprite):
     FALL_SPEED = 10
     HURT_BLINK_MS = 250
 
+    SPRITESHEET_COLS = 4
     SPRITESHEET_FRAMES = {
         Direction.SOUTH: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.SOUTH], **{
-                'shooting': [(2, 0)],
+                'shooting': [(3, 0)],
                 'falling': [(1, 0)],
             }),
         Direction.WEST: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.WEST], **{
-                'shooting': [(0, 1)],
+                'shooting': [(3, 1)],
                 'falling': [(1, 1)],
             }),
         Direction.EAST: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.EAST], **{
-                'shooting': [(0, 2)],
+                'shooting': [(3, 2)],
                 'falling': [(1, 2)],
             }),
         Direction.NORTH: dict(
             WalkingSprite.SPRITESHEET_FRAMES[Direction.NORTH], **{
-                'shooting': [(2, 3)],
+                'shooting': [(3, 3)],
                 'falling': [(1, 3)],
             }),
     }
