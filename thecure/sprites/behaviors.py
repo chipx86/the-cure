@@ -26,6 +26,10 @@ class WanderMixin(object):
         if self.auto_wander:
             self.wander()
 
+    def stop(self):
+        super(WanderMixin, self).stop()
+        self.stop_wandering()
+
     def wander(self):
         self.set_home_pos()
 
@@ -220,6 +224,10 @@ class ChaseMixin(object):
         self.following = False
         self.exclamation = None
 
+    def stop(self):
+        super(ChaseMixin, self).stop()
+        self.stop_following()
+
     def tick(self):
         super(ChaseMixin, self).tick()
 
@@ -314,8 +322,9 @@ class ChaseMixin(object):
               one_shot=True)
 
     def _on_exclamation_done(self, on_done):
-        self.exclamation.remove()
-        self.exclamation = None
+        if self.exclamation:
+            self.exclamation.remove()
+            self.exclamation = None
 
         if on_done:
             on_done()

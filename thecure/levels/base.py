@@ -169,6 +169,7 @@ class Level(object):
             return
 
         discards = set()
+        stopped_sprites = set()
 
         if self._loaded_chunk_ranges is not None:
             max_chunk_row = min(self._loaded_chunk_ranges[2] + 1,
@@ -179,6 +180,16 @@ class Level(object):
             for row in xrange(self._loaded_chunk_ranges[0], max_chunk_row):
                 for col in xrange(self._loaded_chunk_ranges[1], max_chunk_col):
                     discards.add((row, col))
+
+                    chunk_rect = pygame.Rect(
+                        col * self.CHUNK_SIZE[0] * Tile.WIDTH,
+                        row * self.CHUNK_SIZE[1] * Tile.HEIGHT,
+                        self.CHUNK_SIZE[0] * Tile.WIDTH,
+                        self.CHUNK_SIZE[1] * Tile.HEIGHT)
+
+                    for sprite in self.main_layer.iterate_in_rect(chunk_rect):
+                        if sprite.started:
+                            stopped_sprites.add(sprite)
 
         max_chunk_row = min(chunk_ranges[2] + 1, self.chunk_rows)
         max_chunk_col = min(chunk_ranges[3] + 1, self.chunk_cols)
@@ -192,10 +203,12 @@ class Level(object):
                                          self.CHUNK_SIZE[0] * Tile.WIDTH,
                                          self.CHUNK_SIZE[1] * Tile.HEIGHT)
 
-                for layer in self.layers:
-                    for sprite in layer.iterate_in_rect(chunk_rect):
-                        if not sprite.started:
-                            sprite.start()
+                for sprite in self.main_layer.iterate_in_rect(chunk_rect):
+                    if not sprite.started:
+                        sprite.start()
+
+                    if sprite in stopped_sprites:
+                        stopped_sprites.remove(sprite)
 
                 coord = (row, col)
 
@@ -210,6 +223,9 @@ class Level(object):
                     tile.remove()
 
                 del self._loaded_tiles[coord]
+
+        for sprite in stopped_sprites:
+            sprite.stop()
 
     def _get_chunk_ranges(self, rect):
         width_divisor = float(Tile.WIDTH * self.CHUNK_SIZE[0])
