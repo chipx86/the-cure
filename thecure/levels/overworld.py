@@ -100,13 +100,13 @@ class Overworld(Level):
             'wander': False,
         },
         {
-            'name': 'girl1',
+            'name': 'boy2',
             'pos': (4992, 5184),
             'dir': Direction.SOUTH,
             'wander': True,
         },
         {
-            'name': 'girl1',
+            'name': 'nun',
             'pos': (6080, 5056),
             'dir': Direction.EAST,
             'wander': True,
@@ -118,45 +118,45 @@ class Overworld(Level):
             'wander': True,
         },
         {
-            'name': 'girl1',
+            'name': 'nun',
             'pos': (5248, 5952),
             'dir': Direction.SOUTH,
             'wander': False,
         },
         {
-            'name': 'boy1',
+            'name': 'oldlady',
             'pos': (6272, 6848),
             'dir': Direction.WEST,
             'wander': True,
         },
         # Market (right)
         {
-            'name': 'girl1',
+            'name': 'fatman',
             'pos': (5440, 7040),
             'dir': Direction.SOUTH,
             'wander': True,
         },
         # Market (left)
         {
-            'name': 'girl1',
+            'name': 'butcher',
             'pos': (4992, 6848),
             'dir': Direction.SOUTH,
             'wander': False,
         },
         {
-            'name': 'boy1',
+            'name': 'boy2',
             'pos': (3968, 7232),
             'dir': Direction.SOUTH,
             'wander': True,
         },
         {
-            'name': 'boy1',
-            'pos': (4160, 4672),
+            'name': 'butcher',
+            'pos': (4160, 4608),
             'dir': Direction.EAST,
             'wander': True,
         },
         {
-            'name': 'boy1',
+            'name': 'girl1',
             'pos': (5696, 7552),
             'dir': Direction.EAST,
             'wander': True,
@@ -170,20 +170,20 @@ class Overworld(Level):
         },
         # Camp site (right)
         {
-            'name': 'boy1',
+            'name': 'butcher',
             'pos': (3008, 2176),
             'dir': Direction.WEST,
             'wander': False,
         },
         {
-            'name': 'boy1',
+            'name': 'fatman',
             'pos': (2688, 2304),
             'dir': Direction.NORTH,
             'wander': False,
         },
         # Camp site (left)
         {
-            'name': 'boy1',
+            'name': 'fatman',
             'pos': (384, 2048),
             'dir': Direction.SOUTH,
             'wander': False,
@@ -196,19 +196,19 @@ class Overworld(Level):
         },
         # Forest (top-right)
         {
-            'name': 'boy1',
+            'name': 'nun',
             'pos': (2816, 320),
             'dir': Direction.SOUTH,
             'wander': False,
         },
         {
-            'name': 'boy1',
+            'name': 'oldlady',
             'pos': (2368, 256),
             'dir': Direction.EAST,
             'wander': False,
         },
         {
-            'name': 'boy1',
+            'name': 'boy2',
             'pos': (2368, 640),
             'dir': Direction.WEST,
             'wander': True,
