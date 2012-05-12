@@ -4,7 +4,7 @@ import pygame
 
 from thecure.levels.base import Level
 from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy, Snake, \
-                            Slime, Tile
+                            Gargoyle, Slime, Tile
 from thecure.timer import Timer
 
 
@@ -33,6 +33,13 @@ class Overworld(Level):
             'mobs': [Slime],
             'min': 10,
             'max': 20,
+        },
+        # Cemetery,
+        {
+            'rect': pygame.Rect(73, 123, 18, 13),
+            'mobs': [Gargoyle],
+            'min': 3,
+            'max': 5,
         },
         # Swamp
         {
@@ -326,6 +333,7 @@ class Overworld(Level):
                 mob = mob_cls()
                 mob.direction = Direction.random()
                 mob.update_image()
+                mob.rect.bottomleft = (x * Tile.WIDTH, (y + 1) * Tile.HEIGHT)
                 mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
                 self.main_layer.add(mob)
                 self._allowed_spawn_bitmap[y][x] = 0

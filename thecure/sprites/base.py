@@ -423,4 +423,8 @@ class WalkingSprite(Sprite):
 
 
 class Human(object):
-    pass
+    def update_collision_rects(self):
+        self.collision_rects = [
+            pygame.Rect(0, self.rect.height / 2,
+                        self.rect.width, self.rect.height / 2),
+        ]
