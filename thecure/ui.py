@@ -8,31 +8,14 @@ from thecure.sprites import Player
 from thecure.timer import Timer
 
 
-class Widget(object):
+class UIWidget(object):
     def __init__(self, ui):
         self.ui = ui
-        self.ui.widgets.append(self)
         self.rect = pygame.Rect(0, 0, 0, 0)
 
-        self.closed = Signal()
 
-    def move_to(self, x, y):
-        self.rect.left = x
-        self.rect.top = y
-
-    def resize(self, w, h):
-        self.rect.width = w
-        self.rect.height = h
-
-    def close(self):
-        self.ui.close(self)
-
-    def draw(self, surface):
-        raise NotImplemented
-
-
-class TextBox(Widget):
-    BG_COLOR = (0, 0, 0, 190)
+class TextBox(UIWidget):
+    BG_COLOR = (0, 0, 0, 220)
     BORDER_COLOR = (255, 255, 255, 120)
     TEXT_COLOR = (255, 255, 255)
     BORDER_WIDTH = 1
@@ -49,6 +32,8 @@ class TextBox(Widget):
         self.border_color = border_color
         self.text_color = text_color
 
+        self.closed = Signal()
+
     def _render_text(self):
         if isinstance(self.text, list):
             lines = self.text
@@ -59,55 +44,23 @@ class TextBox(Widget):
         total_height = 0
 
         for line in lines:
-            if isinstance(line, list):
-                columns = line
-            else:
-                columns = [line]
+            text_surface = self.ui.small_font.render(line, True,
+                                                     self.text_color)
+            total_height += text_surface.get_height() + self.line_spacing
+            surfaces.append(text_surface)
 
-            column_surfaces = []
-            line_height = 0
-
-            for column in columns:
-                attrs = None
-
-                if not isinstance(column, tuple):
-                    column = {}, column
-
-                attrs, text = column
-                font = attrs.get('font', self.ui.font)
-
-                text_surface = font.render(text, True, self.text_color)
-                column_surfaces.append((attrs, text_surface))
-                column_height = text_surface.get_height()
-
-                if 'padding_top' in attrs:
-                    column_height += attrs['padding_top']
-
-                column_height += self.line_spacing
-
-                line_height = max(line_height, column_height)
-
-            if column_surfaces:
-                surfaces.append((line_height, column_surfaces))
-                total_height += line_height
-
-        # Get rid of that last spacing.
         total_height -= self.line_spacing
 
         y = (self.rect.height - total_height) / 2
 
-        for line_height, column_surfaces in surfaces:
-            column_width = self.rect.width / len(column_surfaces)
-            x = 0
+        for surface in surfaces:
+            self.surface.blit(surface,
+                              ((self.rect.width - surface.get_width()) / 2, y))
 
-            for attrs, column_surface in column_surfaces:
-                self.surface.blit(
-                    column_surface,
-                    (x + (column_width - column_surface.get_width()) / 2,
-                     y + attrs.get('padding_top', 0)))
-                x += column_width
+            y += surface.get_height() + self.line_spacing
 
-            y += line_height
+    def close(self):
+        self.ui.close(self)
 
     def draw(self, surface):
         if not self.surface:
@@ -116,12 +69,15 @@ class TextBox(Widget):
             pygame.draw.rect(self.surface, self.border_color,
                              (0, 0, self.rect.width, self.rect.height),
                              self.BORDER_WIDTH)
+            pygame.draw.rect(self.surface, self.border_color,
+                             (3, 3, self.rect.width - 6, self.rect.height - 6),
+                             self.BORDER_WIDTH)
             self._render_text()
 
         surface.blit(self.surface, self.rect.topleft)
 
 
-class StatusArea(Widget):
+class StatusArea(UIWidget):
     IMAGE_SPACING = 5
     SIDE_SPACING = 15
     PADDING = 5
@@ -134,8 +90,9 @@ class StatusArea(Widget):
         self.empty_heart = load_spritesheet_frame('hearts', (0, 2), 1, 3)
         self.life_image = load_image('sprites/life')
 
-        self.resize(self.ui.size[0],
-                    self.life_image.get_height() + 2 * self.PADDING)
+        self.rect.size = (self.ui.size[0],
+                          self.life_image.get_height() + 2 * self.PADDING)
+
         self.surface = pygame.Surface(self.rect.size).convert_alpha()
 
         player = self.ui.engine.player
@@ -207,13 +164,14 @@ class GameUI(object):
         self.small_font = pygame.font.Font(self.default_font_file, 16)
 
         self.status_area = StatusArea(self)
-        self.status_area.move_to(0, 0)
+        self.widgets.append(self.status_area)
 
     def show_textbox(self, text, **kwargs):
         textbox = TextBox(self, text, **kwargs)
-        textbox.resize(self.size[0] - 2 * self.PADDING,
-                       self.TEXTBOX_HEIGHT)
-        textbox.move_to(self.PADDING, (self.size[1] - textbox.rect.height) / 2)
+        textbox.rect = pygame.Rect(
+            self.PADDING, (self.size[1] - self.TEXTBOX_HEIGHT) / 2,
+            self.size[0] - 2 * self.PADDING, self.TEXTBOX_HEIGHT)
+        self.widgets.append(textbox)
 
         return textbox
 
@@ -232,21 +190,21 @@ class GameUI(object):
 
         self.close_monologues()
 
-        lines = text[0].split('\n')
-        textbox = TextBox(self, lines, stay_open=True, **kwargs)
-        textbox.resize(self.size[0] - 2 * self.PADDING -
-                       self.MONOLOGUE_X,
-                       self.MONOLOGUE_HEIGHT * len(lines))
-        self.active_monologue = textbox
+        if actor is None:
+            actor = self.engine.player
 
         clip_rect = self.engine.camera.rect
         offset = (-clip_rect.x, -clip_rect.y)
 
-        if actor is None:
-            actor = self.engine.player
-
-        textbox.move_to(self.MONOLOGUE_X,
-                        actor.rect.move(offset).bottom + y_offset)
+        lines = text[0].splitlines()
+        textbox = TextBox(self, lines[0], stay_open=True, **kwargs)
+        self.widgets.append(textbox)
+        textbox.rect = pygame.Rect(
+            self.MONOLOGUE_X,
+            actor.rect.move(offset).bottom + y_offset,
+            self.size[0] - 2 * self.PADDING - self.MONOLOGUE_X,
+            self.MONOLOGUE_HEIGHT * len(lines))
+        self.active_monologue = textbox
 
         self.monologue_timer = Timer(ms=timeout_ms or self.MONOLOGUE_TIMEOUT_MS,
                                      cb=_next_monologue,
@@ -330,8 +288,8 @@ class GameUI(object):
         self.engine.paused = True
         self.confirm_quit_box = self.show_textbox([
             "Giving up already?",
-            ({'font': self.small_font}, "'Y' to give up."),
-            ({'font': self.small_font}, "'N' to keep playing.")
+            "'Y' to give up.",
+            "'N' to keep playing."
         ])
 
     def draw(self, surface):
