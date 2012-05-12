@@ -79,3 +79,7 @@ def get_level_filename(name):
 
 def get_tilesets_path():
     return os.path.join(DATA_DIR, 'images', 'sprites', 'tiles')
+
+
+def get_music_path(filename):
+    return os.path.join(DATA_DIR, 'music', *filename.split('/'))

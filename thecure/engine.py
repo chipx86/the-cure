@@ -117,6 +117,8 @@ class TheCureEngine(object):
     def switch_level(self, num):
         assert num < len(self.levels)
 
+        pygame.mixer.music.fadeout(2000)
+
         if self.active_level:
             self.active_level.stop()
             self.active_level.main_layer.remove(self.player)

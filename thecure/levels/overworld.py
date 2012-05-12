@@ -3,6 +3,7 @@ import random
 import pygame
 
 from thecure.levels.base import Level
+from thecure.resources import get_music_path
 from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy, Snake, \
                             Gargoyle, Troll, Slime, Bee, Tile
 from thecure.timer import Timer
@@ -337,6 +338,9 @@ class Overworld(Level):
                 mob.move_to(x * Tile.WIDTH, y * Tile.HEIGHT)
                 self.main_layer.add(mob)
                 self._allowed_spawn_bitmap[y][x] = 0
+
+        pygame.mixer.music.load(get_music_path('the_snow_queen.mp3'))
+        pygame.mixer.music.play(-1)
 
     def add_item(self, name, text):
         self.has_items[name] = False

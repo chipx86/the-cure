@@ -2,6 +2,7 @@ import pygame
 
 from thecure.effects import ScreenFadeEffect, ScreenFlashEffect
 from thecure.levels.base import Level
+from thecure.resources import get_music_path
 from thecure.sprites import Direction, Wife, Sprite
 from thecure.timer import Timer
 
@@ -32,6 +33,8 @@ class Cliff(Level):
             'Laura! NO! No no no, God no.. My wife...',
             "What is she doing? Is she going to kill me?! What do I do?!!",
         ])
+
+        pygame.mixer.music.queue(get_music_path('oppressive_gloom.mp3'))
 
     def _on_wife_transitioned(self):
         self.engine.player.allow_player_control = False
