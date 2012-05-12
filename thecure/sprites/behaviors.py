@@ -212,6 +212,7 @@ class ChaseMixin(object):
     STOP_FOLLOWING_DISTANCE = 1000
     SHOW_EXCLAMATION = True
     EXCLAMATION_MS = 700
+    FOLLOWING_KEY_NAME = "walking"
 
     def __init__(self, *args, **kwargs):
         super(ChaseMixin, self).__init__(*args, **kwargs)
@@ -278,15 +279,13 @@ class ChaseMixin(object):
 
                 self.update_image()
 
-                return
-
         super(ChaseMixin, self).tick()
 
     def start_following(self):
         self.following = True
         self.stop_wandering()
         self.velocity = (0, 0)
-        self.start_animation('walking')
+        self.start_animation(self.FOLLOWING_KEY_NAME)
 
     def stop_following(self):
         self.following = False
