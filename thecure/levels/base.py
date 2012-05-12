@@ -228,7 +228,7 @@ class Level(object):
 
     def _cmp_sprites(self, a, b):
         return (cmp(a.DRAW_ABOVE, b.DRAW_ABOVE) or
-                cmp(a.rect.topleft, b.rect.topleft))
+                cmp((a.rect.top, a.rect.left), (b.rect.top, b.rect.left)))
 
     def draw(self, screen, clip_rect):
         if self._prev_clip_rect != clip_rect:
