@@ -21,6 +21,7 @@ class Direction(object):
 class BaseSprite(pygame.sprite.DirtySprite):
     SHOULD_CHECK_COLLISIONS = True
     DEFAULT_HEALTH = 0
+    DRAW_ABOVE = False
 
     def __init__(self):
         super(BaseSprite, self).__init__()

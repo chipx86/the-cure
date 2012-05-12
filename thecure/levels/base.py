@@ -226,6 +226,10 @@ class Level(object):
         for layer in self.layers:
             layer.start()
 
+    def _cmp_sprites(self, a, b):
+        return (cmp(a.DRAW_ABOVE, b.DRAW_ABOVE) or
+                cmp(a.rect.topleft, b.rect.topleft))
+
     def draw(self, screen, clip_rect):
         if self._prev_clip_rect != clip_rect:
             self._swap_chunks(clip_rect)
@@ -234,7 +238,7 @@ class Level(object):
 
         for layer in self.layers:
             for sprite in sorted(layer.iterate_in_rect(clip_rect),
-                                 key=lambda s: (s.rect.top, s.rect.left)):
+                                 cmp=self._cmp_sprites):
                 if sprite.visible and sprite.dirty:
                     screen.blit(sprite.image, sprite.rect.move(offset))
 
