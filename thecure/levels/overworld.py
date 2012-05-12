@@ -17,15 +17,15 @@ class Overworld(Level):
         {
             'rect': pygame.Rect(0, 0, 48, 38),
             'mobs': [Slime, Snake],
-            'min': 10,
-            'max': 15,
+            'min': 8,
+            'max': 12,
         },
         # Grove area
         {
             'rect': pygame.Rect(7, 42, 46, 33),
             'mobs': [Bee],
-            'min': 10,
-            'max': 20,
+            'min': 8,
+            'max': 12
         },
         # Behind lab
         {
@@ -45,36 +45,36 @@ class Overworld(Level):
         {
             'rect': pygame.Rect(0, 113, 57, 43),
             'mobs': [Snake],
-            'min': 20,
-            'max': 30,
+            'min': 10,
+            'max': 15,
         },
         # Dirt area near ocean
         {
             'rect': pygame.Rect(92, 104, 36, 40),
             'mobs': [Slime],
             'min': 15,
-            'max': 30,
+            'max': 20,
         },
         # Desert
         {
             'rect': pygame.Rect(126, 98, 23, 29),
             'mobs': [Snake],
-            'min': 10,
-            'max': 20,
+            'min': 8,
+            'max': 12,
         },
         # South-East of mountain
         {
             'rect': pygame.Rect(124, 38, 25, 45),
             'mobs': [Bee, Slime],
-            'min': 10,
-            'max': 20,
+            'min': 8,
+            'max': 10,
         },
         # South of mountain
         {
             'rect': pygame.Rect(70, 43, 47, 19),
             'mobs': [Bee, Snake],
-            'min': 10,
-            'max': 20,
+            'min': 8,
+            'max': 10,
         },
         # Mountain
         {

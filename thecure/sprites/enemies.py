@@ -122,7 +122,7 @@ class Gargoyle(WanderMixin, ChaseMixin, Enemy):
     NAME = 'gargoyle'
     MOVE_SPEED = 1
     DEFAULT_HEALTH = 20
-    CHASE_SPEED = 3
+    CHASE_SPEED = 2
     PAUSE_CHANCE = 0.3
     WANDER_KEY_NAME = 'walking'
     STOP_FOLLOWING_DISTANCE = 500
