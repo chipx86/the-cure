@@ -28,7 +28,7 @@ class Cliff(Level):
                            'be here somewhere.')
 
         self.add_monologue('found-wife', [
-            'NO! No no no, God no.. My wife...',
+            'Laura! NO! No no no, God no.. My wife...',
             "What is she doing? Is she going to kill me?! What do I do?!!",
         ])
 
@@ -54,10 +54,8 @@ class Cliff(Level):
                 ('player', "It must just be me. I must have the infection.\n"
                            "But I have what I need to cure it."),
             ],
+            timeout_ms=5000,
             on_done=self._complete_cure)
-
-    def _after_dialogue(self):
-        self.complete_ure
 
     def _on_wife_dead(self):
         self.killed_wife = True
@@ -134,9 +132,12 @@ class Cliff(Level):
         self.engine.ui_manager.show_monologue(s, on_done=self._use_cure)
 
     def _use_cure(self):
+        timer = Timer(ms=1500, cb=self._after_flash, one_shot=True,
+                      start_automatically=False)
+
         self.effect = ScreenFlashEffect(self.layer_map['fg2'],
                                         self.engine.camera.rect)
-        self.effect.stopped.connect(self._after_flash)
+        self.effect.stopped.connect(timer.start)
         self.effect.start()
 
     def _after_flash(self):
@@ -170,7 +171,7 @@ class Cliff(Level):
             self.connect_eventbox_enter('jump-off-cliff',
                                         self._begin_jump_off_cliff, True)
         else:
-            self._finale()
+            Timer(ms=5000, cb=self._finale, one_shot=True)
 
     def _begin_jump_off_cliff(self):
         player = self.engine.player
