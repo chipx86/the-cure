@@ -4,6 +4,8 @@ import pygame
 from pygame.locals import *
 
 from thecure import set_engine
+from thecure.cutscenes import OpeningCutscene
+from thecure.cutscenes import TutorialCutscene
 from thecure.levels import get_levels
 from thecure.resources import get_font_filename
 from thecure.signals import Signal
@@ -61,6 +63,7 @@ class TheCureEngine(object):
 
         # State and objects
         self.active_level = None
+        self.active_cutscene = None
         self.paused = False
         self.screen = screen
         self.clock = pygame.time.Clock()
@@ -68,6 +71,7 @@ class TheCureEngine(object):
         self.levels = []
         self.level_draw_pos = (0, 0)
         self.level_draw_area = None
+        self.camera = None
 
         self.ui_manager = UIManager(self)
         self.ui_manager.add_control_panel()
@@ -77,7 +81,10 @@ class TheCureEngine(object):
         self.show_debug_info = False
 
     def run(self):
-        self._setup_game()
+        self.active_cutscene = OpeningCutscene()
+        self.active_cutscene.done.connect(self._setup_game)
+        self.active_cutscene.start()
+
         self._mainloop()
 
     def quit(self):
@@ -92,6 +99,8 @@ class TheCureEngine(object):
         self.camera = Camera(self)
         self.tick.clear()
 
+        self.active_cutscene = None
+
         self.player.reset()
         self.player.layer = None
 
@@ -99,7 +108,18 @@ class TheCureEngine(object):
         self.levels = [level(self) for level in get_levels()]
         self.switch_level(0)
 
-        self.paused = False
+        self.paused = True
+
+        self.show_tutorial()
+
+    def show_tutorial(self):
+        def on_done():
+            self.active_cutscene = None
+            self.paused = False
+
+        self.active_cutscene = TutorialCutscene()
+        self.active_cutscene.start()
+        self.active_cutscene.done.connect(on_done)
 
     def switch_level(self, num):
         assert num < len(self.levels)
@@ -161,13 +181,16 @@ class TheCureEngine(object):
             self.quit()
             return False
 
-        if self.ui_manager and self.ui_manager.handle_event(event):
+        if (self.ui_manager and not self.active_cutscene and
+            self.ui_manager.handle_event(event)):
             return True
 
         if event.type == KEYDOWN and event.key == K_F2:
             self.show_debug_info = not self.show_debug_info
         elif event.type == KEYDOWN and event.key == K_F3:
             self.debug_rects = not self.debug_rects
+        elif self.active_cutscene:
+            self.active_cutscene.handle_event(event)
         elif event.type == KEYDOWN and event.key == K_ESCAPE:
             self.ui_manager.confirm_quit()
         elif self.active_level:
@@ -198,6 +221,10 @@ class TheCureEngine(object):
     def _draw(self):
         if self.camera:
             self.camera.update()
+
+        if self.active_cutscene:
+            self.screen.set_clip(None)
+            self.active_cutscene.draw(self.screen)
 
         if self.active_level:
             self.active_level.draw(self.surface, self.camera.rect)

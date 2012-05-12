@@ -43,9 +43,8 @@ class Cliff(Level):
                 ('player', "Laura, I.. I don't understand. You were infected!"),
                 ('wife', "Infected? I'm fine, but I've been worrying about "
                          "you all day."),
-                ('wife', ["When you left for work you talked about testing "
-                          "a new\n"
-                          "breakthrough cure for the cold."]),
+                ('wife', ["When you left for work you were excited about "
+                          "some new breakthrough in your cure for the cold."]),
                 ('wife', ["Then you called, mumbling to meet me up here."]),
                 ('player', "But the lab explosion. The mutation. "
                            "The hallucinations.."),
