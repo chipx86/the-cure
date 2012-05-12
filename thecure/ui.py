@@ -196,7 +196,7 @@ class GameUI(object):
         offset = (-clip_rect.x, -clip_rect.y)
 
         lines = text[0].splitlines()
-        textbox = TextBox(self, lines[0], stay_open=True, **kwargs)
+        textbox = TextBox(self, lines, stay_open=True, **kwargs)
         self.widgets.append(textbox)
         textbox.rect = pygame.Rect(
             self.MONOLOGUE_X,
