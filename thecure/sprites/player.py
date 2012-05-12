@@ -72,7 +72,7 @@ class Bullet(Sprite):
 
 class Player(WalkingSprite):
     MAX_LIVES = 3
-    MAX_HEALTH = 6
+    MAX_HEALTH = 8
 
     SHOOT_MS = 500
     FALL_SPEED = 10

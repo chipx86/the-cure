@@ -84,13 +84,14 @@ class Bee(WanderMixin, AttackLineMixin, ChaseMixin, Enemy):
     DEFAULT_HEALTH = 1
     MOVE_SPEED = 1
     CHASE_SPEED = 2
-    ATTACK_SPEED = 15
+    ATTACK_SPEED = 12
     APPROACH_DISTANCE = 250
     ATTACK_DISTANCE = 150
     POST_ATTACK_MS = 2000
     ATTACK_TICKS_PAD = 2
     PAUSE_CHANCE = 0
     FOLLOWING_KEY_NAME = "wandering"
+    SHOW_EXCLAMATION = False
     DRAW_ABOVE = True
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
