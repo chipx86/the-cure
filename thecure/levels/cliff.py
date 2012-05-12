@@ -16,6 +16,7 @@ class Cliff(Level):
         self.jumped = False
 
         self.engine.player.can_run = False
+        self.engine.player.set_running(False)
 
         self.wife = Wife()
         self.wife.move_to(*self.eventboxes['infected-wife'].rects[0].topleft)
