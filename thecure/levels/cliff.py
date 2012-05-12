@@ -34,6 +34,7 @@ class Cliff(Level):
         ])
 
     def _on_wife_transitioned(self):
+        self.engine.player.allow_player_control = False
         self.engine.ui_manager.show_dialogue(
             actors={
                 'player': self.engine.player,
@@ -44,7 +45,7 @@ class Cliff(Level):
                 ('player', "Laura, I.. I don't understand. You were infected!"),
                 ('wife', "Infected? I'm fine, but I've been worrying about "
                          "you all day."),
-                ('wife', ["When you left for work you were excited about "
+                ('wife', ["When you left for work you were excited about\n"
                           "some new breakthrough in your cure for the cold."]),
                 ('wife', ["Then you called, mumbling to meet me up here."]),
                 ('player', "But the lab explosion. The mutation. "
