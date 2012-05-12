@@ -187,6 +187,16 @@ class Level(object):
             for col in xrange(chunk_ranges[1], max_chunk_col):
                 self._load_chunk(row, col)
 
+                chunk_rect = pygame.Rect(col * self.CHUNK_SIZE[0] * Tile.WIDTH,
+                                         row * self.CHUNK_SIZE[1] * Tile.HEIGHT,
+                                         self.CHUNK_SIZE[0] * Tile.WIDTH,
+                                         self.CHUNK_SIZE[1] * Tile.HEIGHT)
+
+                for layer in self.layers:
+                    for sprite in layer.iterate_in_rect(chunk_rect):
+                        if not sprite.started:
+                            sprite.start()
+
                 coord = (row, col)
 
                 if coord in discards:
@@ -222,9 +232,7 @@ class Level(object):
     def start(self):
         # We don't need this anymore.
         self._allowed_spawn_bitmap = []
-
-        for layer in self.layers:
-            layer.start()
+        self.engine.player.start()
 
     def _cmp_sprites(self, a, b):
         return (cmp(a.DRAW_ABOVE, b.DRAW_ABOVE) or
