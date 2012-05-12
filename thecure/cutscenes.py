@@ -150,6 +150,6 @@ class TutorialCutscene(Cutscene):
                      'Explore and find the five items you need:\n'
                      'Crate of equipment, mushroom, salt crystal, giant web, '
                      'and a puffy red flower.\n'
-                     'Use arrow keys to move, shift to run, and C to shoot.\n'
+                     'Use arrow keys to move and C to shoot.\n'
                      'Then find Laura!')
         ]

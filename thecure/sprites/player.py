@@ -135,7 +135,7 @@ class Player(WalkingSprite):
         self.health_changed.emit()
         self.lives_changed.emit()
 
-        self.set_running(False)
+        self.set_running(True)
         self.stop_moving()
         self._update_animation()
 
@@ -154,8 +154,6 @@ class Player(WalkingSprite):
                 self.move_direction(Direction.DOWN)
             elif event.key == K_c:
                 self.set_shooting(True)
-            elif event.key in (K_LSHIFT, K_RSHIFT) and self.can_run:
-                self.set_running(True)
             elif event.key == K_F4:
                 self.collidable = not self.collidable
         elif event.type == KEYUP:
@@ -169,8 +167,6 @@ class Player(WalkingSprite):
                 self.stop_moving_direction(Direction.DOWN)
             elif event.key == K_c:
                 self.set_shooting(False)
-            elif event.key in (K_LSHIFT, K_RSHIFT):
-                self.set_running(False)
 
     def move_direction(self, direction):
         self.direction = direction
