@@ -125,6 +125,7 @@ class TheCureEngine(object):
         assert num < len(self.levels)
 
         if self.active_level:
+            self.active_level.stop()
             self.active_level.main_layer.remove(self.player)
 
         self.player.reset()

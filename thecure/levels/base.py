@@ -234,6 +234,10 @@ class Level(object):
         self._allowed_spawn_bitmap = []
         self.engine.player.start()
 
+    def stop(self):
+        for layer in self.layers:
+            layer.stop()
+
     def _cmp_sprites(self, a, b):
         return (cmp(a.DRAW_ABOVE, b.DRAW_ABOVE) or
                 cmp((a.rect.top, a.rect.left), (b.rect.top, b.rect.left)))

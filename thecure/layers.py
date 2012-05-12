@@ -199,3 +199,7 @@ class Layer(object):
     def start(self):
         for sprite in self.quad_tree:
             sprite.start()
+
+    def stop(self):
+        for sprite in self.quad_tree:
+            sprite.stop()
