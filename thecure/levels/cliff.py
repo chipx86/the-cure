@@ -252,4 +252,14 @@ class Cliff(Level):
                 ]
 
         widget = self.engine.ui.show_textbox(s)
+        widget.closed.connect(self._show_credits)
+
+    def _show_credits(self):
+        s = [
+            'Written by Christian Hammond',
+            'The Snow Queen and Oppressive Gloom music by Kevin MacLeod',
+            'Artwork by First Seed Material and Christian Hammond',
+        ]
+
+        widget = self.engine.ui.show_textbox(s)
         widget.closed.connect(self.engine._setup_game)
