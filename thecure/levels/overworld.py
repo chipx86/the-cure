@@ -4,7 +4,7 @@ import pygame
 
 from thecure.levels.base import Level
 from thecure.sprites import Direction, InfectedHuman, Sprite, LostBoy, Snake, \
-                            Gargoyle, Slime, Tile
+                            Gargoyle, Troll, Slime, Tile
 from thecure.timer import Timer
 
 
@@ -79,9 +79,9 @@ class Overworld(Level):
         # Mountain
         {
             'rect': pygame.Rect(69, 2, 62, 32),
-            'mobs': [Slime], # XXX
-            'min': 20,
-            'max': 30,
+            'mobs': [Slime, Troll], # XXX
+            'min': 10,
+            'max': 20,
         },
     ]
 

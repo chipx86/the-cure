@@ -117,3 +117,39 @@ class Gargoyle(WanderMixin, ChaseMixin, Enemy):
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
         return True
+
+
+class Troll(WanderMixin, ChaseMixin, Enemy):
+    NAME = 'troll'
+    MOVE_SPEED = 1
+    DEFAULT_HEALTH = 20
+    CHASE_SPEED = 2
+    PAUSE_CHANCE = 0.3
+    WANDER_KEY_NAME = 'walking'
+    STOP_FOLLOWING_DISTANCE = 500
+    SPRITESHEET_ROWS = 4
+    SPRITESHEET_COLS = 3
+    SPRITESHEET_FRAMES = {
+        Direction.DOWN: {
+            'default': [(1, 0)],
+            'walking': [(0, 0), (1, 0), (2, 0), (1, 0)],
+        },
+        Direction.LEFT: {
+            'default': [(1, 1)],
+            'walking': [(0, 1), (1, 1), (2, 1), (1, 1)],
+        },
+        Direction.RIGHT: {
+            'default': [(1, 2)],
+            'walking': [(0, 2), (1, 2), (2, 2), (1, 2)],
+        },
+        Direction.UP: {
+            'default': [(1, 3)],
+            'walking': [(0, 3), (1, 3), (2, 3), (1, 3)],
+        },
+    }
+
+    def update_collision_rects(self):
+        self.collision_rects = [
+            pygame.Rect(0, self.rect.height / 2,
+                        self.rect.width, self.rect.height / 2),
+        ]
