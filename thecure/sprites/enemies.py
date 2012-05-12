@@ -9,6 +9,26 @@ from thecure.sprites.behaviors import ChaseMixin, WanderMixin, AttackLineMixin
 from thecure.timer import Timer
 
 
+STANDARD_SPRITESHEET_FRAMES = {
+    Direction.DOWN: {
+        'default': [(1, 0)],
+        'wandering': [(0, 0), (1, 0), (2, 0), (1, 0)],
+    },
+    Direction.LEFT: {
+        'default': [(1, 1)],
+        'wandering': [(0, 1), (1, 1), (2, 1), (1, 1)],
+    },
+    Direction.RIGHT: {
+        'default': [(1, 2)],
+        'wandering': [(0, 2), (1, 2), (2, 2), (1, 2)],
+    },
+    Direction.UP: {
+        'default': [(1, 3)],
+        'wandering': [(0, 3), (1, 3), (2, 3), (1, 3)],
+    },
+}
+
+
 class Enemy(WalkingSprite):
     DEFAULT_HEALTH = 10
     LETHAL = True
@@ -29,24 +49,7 @@ class Snake(WanderMixin, AttackLineMixin, Enemy):
     MOVE_SPEED = 1
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
-    SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
-            'default': [(1, 0)],
-            'wandering': [(0, 0), (1, 0), (2, 0), (1, 0)],
-        },
-        Direction.LEFT: {
-            'default': [(1, 1)],
-            'wandering': [(0, 1), (1, 1), (2, 1), (1, 1)],
-        },
-        Direction.RIGHT: {
-            'default': [(1, 2)],
-            'wandering': [(0, 2), (1, 2), (2, 2), (1, 2)],
-        },
-        Direction.UP: {
-            'default': [(1, 3)],
-            'wandering': [(0, 3), (1, 3), (2, 3), (1, 3)],
-        },
-    }
+    SPRITESHEET_FRAMES = STANDARD_SPRITESHEET_FRAMES
 
 
 class Slime(WanderMixin, AttackLineMixin, Enemy):
@@ -59,24 +62,7 @@ class Slime(WanderMixin, AttackLineMixin, Enemy):
     PAUSE_CHANCE = 0.3
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
-    SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
-            'default': [(1, 0)],
-            'wandering': [(0, 0), (1, 0), (2, 0), (1, 0)],
-        },
-        Direction.LEFT: {
-            'default': [(1, 1)],
-            'wandering': [(0, 1), (1, 1), (2, 1), (1, 1)],
-        },
-        Direction.RIGHT: {
-            'default': [(1, 2)],
-            'wandering': [(0, 2), (1, 2), (2, 2), (1, 2)],
-        },
-        Direction.UP: {
-            'default': [(1, 3)],
-            'wandering': [(0, 3), (1, 3), (2, 3), (1, 3)],
-        },
-    }
+    SPRITESHEET_FRAMES = STANDARD_SPRITESHEET_FRAMES
 
 
 class Bee(WanderMixin, AttackLineMixin, ChaseMixin, Enemy):
@@ -95,24 +81,7 @@ class Bee(WanderMixin, AttackLineMixin, ChaseMixin, Enemy):
     DRAW_ABOVE = True
     SPRITESHEET_ROWS = 4
     SPRITESHEET_COLS = 3
-    SPRITESHEET_FRAMES = {
-        Direction.DOWN: {
-            'default': [(1, 0)],
-            'wandering': [(0, 0), (1, 0), (2, 0), (1, 0)],
-        },
-        Direction.LEFT: {
-            'default': [(1, 1)],
-            'wandering': [(0, 1), (1, 1), (2, 1), (1, 1)],
-        },
-        Direction.RIGHT: {
-            'default': [(1, 2)],
-            'wandering': [(0, 2), (1, 2), (2, 2), (1, 2)],
-        },
-        Direction.UP: {
-            'default': [(1, 3)],
-            'wandering': [(0, 3), (1, 3), (2, 3), (1, 3)],
-        },
-    }
+    SPRITESHEET_FRAMES = STANDARD_SPRITESHEET_FRAMES
 
     def on_collision(self, dx, dy, obj, self_rect, obj_rect):
         return True
