@@ -10,8 +10,6 @@ class Timer(object):
         self.cb = cb
         self.tick_count_count = 0
         self.started = False
-        self.paused_for_ms = 0
-        self.unpause_cb = None
         self.one_shot = one_shot
         self.tick_cnx = None
         self.start_automatically = True
@@ -22,15 +20,11 @@ class Timer(object):
     def start(self):
         if not self.started:
             self.tick_count = 0
-            self.paused_for_ms = 0
-            self.unpause_cb = None
             self.tick_cnx = self.engine.tick.connect(self.on_tick)
             self.started = True
 
     def reset(self):
         self.tick_count = 0
-        self.paused_for_ms = 0
-        self.unpause_cb = None
 
         if self.ms > 0 and self.start_automatically:
             self.start()
@@ -41,18 +35,10 @@ class Timer(object):
             self.tick_cnx = None
             self.started = False
 
-    def pause(self, ms, unpause_cb):
-        self.paused_for_ms = ms
-        self.unpause_cb = unpause_cb
-        self.tick_count = 0
-
     def on_tick(self):
         self.tick_count += 1.0 / self.engine.FPS * 1000
 
-        if self.paused_for_ms > 0 and self.tick_count >= self.paused_for_ms:
-            self.paused_for_ms = 0
-            self.unpause_cb()
-        elif self.tick_count >= self.ms:
+        if self.tick_count >= self.ms:
             self.tick_count = 0
             self.cb()
 
